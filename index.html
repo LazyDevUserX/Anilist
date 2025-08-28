@@ -20,15 +20,22 @@
         .anime-card { transition: transform 0.3s ease, box-shadow 0.3s ease; }
         .anime-card:hover { transform: translateY(-8px); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2); }
         .tab-active { color: var(--text-main); background-color: #334155; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        .fade-in { animation: fadeIn 0.5s ease-out forwards; }
-        @keyframes modalIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
-        .modal-in { animation: modalIn 0.3s ease-out forwards; }
-        .modal-backdrop-in { animation: fadeIn 0.3s ease-out forwards; }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        
+        @keyframes modalIn { from { opacity: 0; transform: scale(0.95) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+        .modal-in { animation: modalIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        
+        @keyframes backdropIn { from { opacity: 0; } to { opacity: 1; } }
+        .backdrop-in { animation: backdropIn 0.3s ease-out forwards; }
+
         @keyframes toastIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         .toast-in { animation: toastIn 0.3s ease-out forwards; }
+
         @keyframes shimmer { 0% { background-position: -1000px 0; } 100% { background-position: 1000px 0; } }
         .shimmer { background: linear-gradient(to right, #1e293b 8%, #334155 18%, #1e293b 33%); background-size: 2000px 100%; animation: shimmer 2s infinite linear; }
+        
         #searchInput.search-bar-active { width: 100%; max-width: 400px; opacity: 1; padding-left: 1rem; padding-right: 2.5rem; }
     </style>
 </head>
@@ -75,7 +82,7 @@
 
     <script type="module">
         // --- CONFIGURATION ---
-        const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbzrX6LSAxi8Z2ouTtWTmMdiPr1JKiq8gCIfOsZH8H-CKZbe3SB1_VBN-aWnIK2yMftXnA/exec'; // <-- PASTE YOUR NEWEST URL HERE
+        const GOOGLE_SHEET_URL = 'YOUR_NEW_GOOGLE_APPS_SCRIPT_URL'; // <-- PASTE YOUR NEWEST URL HERE
         const ANILIST_API_URL = 'https://graphql.anilist.co';
         const JIKAN_API_URL = 'https://api.jikan.moe/v4';
         const KITSU_API_URL = 'https://kitsu.io/api/edge';
@@ -97,10 +104,36 @@
             toast: document.getElementById('toast'),
         };
 
-        // --- API FUNCTIONS ---
-        async function fetchInitialData() {
-            state.isLoading = true;
-            render();
+        // --- CACHING & API FUNCTIONS ---
+        function loadFromCache() {
+            const cachedData = localStorage.getItem('animeTrackerCache');
+            if (cachedData) {
+                const { lists, anime, timestamp } = JSON.parse(cachedData);
+                // Use cache if it's less than an hour old
+                if (Date.now() - timestamp < 3600000) {
+                    state.lists = lists || [];
+                    state.animeList = anime || [];
+                    state.activeList = state.lists[0] || '';
+                    state.isLoading = false;
+                    state.animeList.forEach(anime => state.apiCache.set(anime.anilistId.toString(), anime));
+                    render();
+                    renderTabs();
+                    return true; // Cache is fresh and loaded
+                }
+            }
+            return false; // No fresh cache
+        }
+
+        function saveToCache() {
+            const cache = {
+                lists: state.lists,
+                anime: state.animeList,
+                timestamp: Date.now()
+            };
+            localStorage.setItem('animeTrackerCache', JSON.stringify(cache));
+        }
+
+        async function syncWithSheet() {
             try {
                 const response = await fetch(GOOGLE_SHEET_URL);
                 if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
@@ -109,12 +142,15 @@
                 
                 state.lists = data.lists || [];
                 state.animeList = data.anime || [];
-                state.activeList = state.lists[0] || '';
+                if (!state.activeList || !state.lists.includes(state.activeList)) {
+                    state.activeList = state.lists[0] || '';
+                }
                 
                 state.animeList.forEach(anime => state.apiCache.set(anime.anilistId.toString(), anime));
+                saveToCache();
             } catch (error) {
-                console.error("Error fetching initial data:", error);
-                DOMElements.stateIndicator.innerHTML = `<p class="text-red-400 text-lg">Failed to load your list. Check console for errors.</p>`;
+                console.error("Error syncing with sheet:", error);
+                showToast("Could not sync with Google Sheet.");
             } finally {
                 state.isLoading = false;
                 render();
@@ -132,7 +168,6 @@
             } catch (error) { console.error("Error updating sheet:", error); }
         }
         
-        // Other API functions (searchAniList, fetchExternalScores) remain the same...
         async function searchAniList(searchTerm) {
             const query = `
                 query ($search: String, $page: Int, $perPage: Int) {
@@ -177,7 +212,7 @@
                     const kitsuRes = await fetch(`${KITSU_API_URL}/anime?filter[text]=${encodeURIComponent(title)}&page[limit]=1`);
                     if (kitsuRes.ok) {
                         const kitsuData = await kitsuRes.json();
-                        if (kitsuData.data.length > 0) {
+                        if (kitsuData.data && kitsuData.data.length > 0) {
                             scores.kitsu = kitsuData.data[0].attributes.averageRating ? `${(kitsuData.data[0].attributes.averageRating / 10).toFixed(2)}` : 'N/A';
                         }
                     }
@@ -206,7 +241,7 @@
             }
              if (state.lists.length === 0) {
                 DOMElements.grid.innerHTML = '';
-                DOMElements.stateIndicator.innerHTML = `<div class="text-center"><h3 class="text-xl font-semibold text-slate-300">Welcome!</h3><p class="text-slate-500 mt-2">Click 'Manage Lists' to create your first list.</p></div>`;
+                DOMElements.stateIndicator.innerHTML = `<div class="text-center"><h3 class="text-xl font-semibold text-slate-300">Welcome!</h3><p class="text-slate-500 mt-2">Click the settings icon to create your first list.</p></div>`;
                 return;
             }
             DOMElements.stateIndicator.innerHTML = '';
@@ -255,7 +290,7 @@
             
             const modalHTML = `
                 <div id="modal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
-                    <div id="modal-backdrop" class="fixed inset-0 bg-black/70 backdrop-blur-sm modal-backdrop-in" onclick="closeModal()"></div>
+                    <div id="modal-backdrop" class="fixed inset-0 bg-black/70 backdrop-blur-sm backdrop-in" onclick="closeModal()"></div>
                     <div id="modal-content" class="relative bg-surface rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto modal-in">
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 p-6">
                             <div class="md:col-span-1"><img src="${anime.coverImage}" alt="${anime.title}" class="w-full aspect-[2/3] object-cover rounded-lg shadow-lg"></div>
@@ -300,7 +335,7 @@
         function renderManageListsModal() {
             let listsHTML = state.lists.map(list => `
                 <div class="flex items-center bg-slate-700 p-2 rounded-md">
-                    <input type="text" value="${list}" class="list-input flex-grow bg-transparent focus:outline-none">
+                    <input type="text" value="${list}" class="list-input flex-grow bg-transparent focus:outline-none text-white">
                     <button class="text-slate-400 hover:text-red-500" onclick="this.parentElement.remove()">
                         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                     </button>
@@ -309,7 +344,7 @@
 
             const modalHTML = `
                 <div id="modal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
-                    <div id="modal-backdrop" class="fixed inset-0 bg-black/70 backdrop-blur-sm modal-backdrop-in" onclick="closeModal()"></div>
+                    <div id="modal-backdrop" class="fixed inset-0 bg-black/70 backdrop-blur-sm backdrop-in" onclick="closeModal()"></div>
                     <div id="modal-content" class="relative bg-surface rounded-lg shadow-xl w-full max-w-md modal-in p-6">
                         <h2 class="text-xl font-bold text-white mb-4">Manage Lists</h2>
                         <div id="list-editor" class="space-y-2 mb-4">${listsHTML}</div>
@@ -326,7 +361,7 @@
                 const newItem = document.createElement('div');
                 newItem.className = "flex items-center bg-slate-700 p-2 rounded-md";
                 newItem.innerHTML = `
-                    <input type="text" placeholder="New list name" class="list-input flex-grow bg-transparent focus:outline-none">
+                    <input type="text" placeholder="New list name" class="list-input flex-grow bg-transparent focus:outline-none text-white">
                     <button class="text-slate-400 hover:text-red-500" onclick="this.parentElement.remove()">
                         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                     </button>`;
@@ -362,6 +397,7 @@
             if (existingIndex > -1) { state.animeList[existingIndex] = { ...state.animeList[existingIndex], ...anime }; } 
             else { state.animeList.push(anime); }
             state.apiCache.set(anime.anilistId.toString(), anime);
+            saveToCache();
             render();
             postToSheet({ action: 'addOrUpdateAnime', data: anime });
             showToast(`${anime.title} added to ${anime.status}`);
@@ -377,6 +413,7 @@
             if (animeIndex === -1) return;
             const anime = state.animeList[animeIndex];
             anime.status = newList;
+            saveToCache();
             postToSheet({ action: 'addOrUpdateAnime', data: anime });
             showToast(`${anime.title} moved to ${newList}`);
             render();
@@ -387,6 +424,7 @@
             if (!confirm('Are you sure you want to delete this anime?')) return;
             const anime = state.animeList.find(a => a.anilistId == id);
             state.animeList = state.animeList.filter(a => a.anilistId != id);
+            saveToCache();
             postToSheet({ action: 'deleteAnime', anilistId: id });
             showToast(`${anime.title} deleted`);
             closeModal();
@@ -398,10 +436,10 @@
             const newLists = Array.from(inputs).map(input => input.value.trim()).filter(Boolean);
             const oldActiveList = state.activeList;
             state.lists = newLists;
-            // If the previously active list was deleted, default to the first new list
             if (!state.lists.includes(oldActiveList)) {
                 state.activeList = state.lists[0] || '';
             }
+            saveToCache();
             postToSheet({ action: 'manageLists', lists: newLists });
             showToast('Lists updated successfully');
             closeModal();
@@ -420,7 +458,7 @@
 
         // --- INITIALIZATION ---
         function init() {
-            if (!GOOGLE_SHEET_URL || GOOGLE_SHEET_URL.includes('YOUR_NEW_GOOGLE_APPS_SCRIPT_URL')) {
+            if (!GOOGLE_SHEET_URL || GOOGLE_SHEET_URL.includes('https://script.google.com/macros/s/AKfycbzrX6LSAxi8Z2ouTtWTmMdiPr1JKiq8gCIfOsZH8H-CKZbe3SB1_VBN-aWnIK2yMftXnA/exec')) {
                 DOMElements.stateIndicator.innerHTML = `<div class="bg-red-900/50 border border-red-700 text-red-300 px-4 py-3 rounded-lg"><p><strong>Configuration Needed!</strong> Please open this HTML file, find the <code>GOOGLE_SHEET_URL</code> variable, and paste your new Web App URL.</p></div>`;
                 return;
             }
@@ -452,7 +490,12 @@
                     DOMElements.searchResults.classList.add('hidden');
                 }
             });
-            fetchInitialData();
+            
+            if (!loadFromCache()) {
+                state.isLoading = true;
+                render();
+            }
+            syncWithSheet();
         }
         init();
     </script>
