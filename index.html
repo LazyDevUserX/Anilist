@@ -25,7 +25,10 @@
         @keyframes modalIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
         .modal-in { animation: modalIn 0.3s ease-out forwards; }
         .modal-backdrop-in { animation: fadeIn 0.3s ease-out forwards; }
-        .search-bar-active { width: 100%; max-width: 400px; opacity: 1; }
+        @keyframes toastIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .toast-in { animation: toastIn 0.3s ease-out forwards; }
+
+        #searchInput.search-bar-active { width: 100%; max-width: 400px; opacity: 1; padding-left: 1rem; padding-right: 2.5rem; }
     </style>
 </head>
 <body class="text-slate-300">
@@ -36,14 +39,15 @@
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex items-center justify-between h-16">
                     <h1 class="text-2xl font-bold text-sky-400">Anime<span class="text-slate-200">Tracker</span></h1>
-                    <div class="flex items-center justify-end flex-1">
-                        <div id="search-container" class="relative flex items-center justify-end">
-                            <input type="text" id="searchInput" placeholder="Search for an anime..." class="w-0 max-w-0 opacity-0 bg-slate-800 border border-slate-700 rounded-full py-2 pl-4 pr-10 text-slate-200 placeholder-slate-500 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-all duration-300 ease-in-out custom-focus-ring">
-                            <button id="search-icon" class="p-2 rounded-full hover:bg-slate-700 transition-colors custom-focus-ring">
-                                <svg class="h-6 w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-                            </button>
-                        </div>
-                        <div id="searchResults" class="absolute top-16 mt-2 w-full max-w-md bg-slate-800 border border-slate-700 rounded-md shadow-lg z-50 max-h-96 overflow-y-auto hidden"></div>
+                    <div id="search-container" class="relative flex items-center justify-end flex-1">
+                        <input type="text" id="searchInput" placeholder="Search for an anime..." class="w-0 max-w-0 opacity-0 bg-slate-800 border border-slate-700 rounded-full py-2 text-slate-200 placeholder-slate-500 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-all duration-300 ease-in-out custom-focus-ring">
+                        <button id="search-icon" class="absolute right-0 p-2 rounded-full hover:bg-slate-700 transition-colors custom-focus-ring">
+                            <svg class="h-6 w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                        </button>
+                        <button id="close-search-icon" class="absolute right-0 p-2 rounded-full hover:bg-slate-700 transition-colors custom-focus-ring hidden">
+                            <svg class="h-6 w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                        </button>
+                        <div id="searchResults" class="absolute top-12 w-full max-w-md bg-slate-800 border border-slate-700 rounded-md shadow-lg z-50 max-h-96 overflow-y-auto hidden"></div>
                     </div>
                 </div>
             </div>
@@ -68,10 +72,11 @@
     <!-- Modal -->
     <div id="modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 hidden">
         <div id="modal-backdrop" class="fixed inset-0 bg-black/70 backdrop-blur-sm modal-backdrop-in"></div>
-        <div id="modal-content" class="relative bg-surface rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto modal-in">
-            <!-- Content will be injected here -->
-        </div>
+        <div id="modal-content" class="relative bg-surface rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto modal-in"></div>
     </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-5 right-5 bg-green-600 text-white py-2 px-4 rounded-lg shadow-lg hidden toast-in"></div>
 
     <script type="module">
         // --- CONFIGURATION ---
@@ -81,7 +86,7 @@
         const KITSU_API_URL = 'https://kitsu.io/api/edge';
 
         // --- APPLICATION STATE ---
-        const state = { animeList: [], activeStatus: 'Watching', isLoading: true, searchTimeout: null };
+        const state = { animeList: [], activeStatus: 'Watching', isLoading: true, searchTimeout: null, apiCache: new Map() };
 
         // --- DOM ELEMENTS ---
         const DOMElements = {
@@ -89,12 +94,14 @@
             tabs: document.getElementById('tabs'),
             searchInput: document.getElementById('searchInput'),
             searchIcon: document.getElementById('search-icon'),
+            closeSearchIcon: document.getElementById('close-search-icon'),
             searchContainer: document.getElementById('search-container'),
             searchResults: document.getElementById('searchResults'),
             stateIndicator: document.getElementById('state-indicator'),
             modal: document.getElementById('modal'),
             modalBackdrop: document.getElementById('modal-backdrop'),
             modalContent: document.getElementById('modal-content'),
+            toast: document.getElementById('toast'),
         };
 
         // --- API FUNCTIONS ---
@@ -105,6 +112,7 @@
                 const response = await fetch(GOOGLE_SHEET_URL);
                 if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                 state.animeList = await response.json();
+                state.animeList.forEach(anime => state.apiCache.set(anime.anilistId.toString(), anime));
             } catch (error) {
                 console.error("Error fetching user list:", error);
                 DOMElements.stateIndicator.innerHTML = `<p class="text-red-400 text-lg">Failed to load your list.</p>`;
@@ -154,18 +162,18 @@
         
         async function fetchExternalScores(malId, title) {
             const scores = { mal: 'N/A', kitsu: 'N/A' };
-            try {
-                if(malId) {
+            if (malId) {
+                try {
                     const malRes = await fetch(`${JIKAN_API_URL}/anime/${malId}`);
-                    if(malRes.ok) {
+                    if (malRes.ok) {
                         const malData = await malRes.json();
                         scores.mal = malData.data.score || 'N/A';
                     }
-                }
-            } catch (e) { console.error("Jikan API error:", e); }
+                } catch (e) { console.error("Jikan API error:", e); }
+            }
             try {
                 const kitsuRes = await fetch(`${KITSU_API_URL}/anime?filter[text]=${encodeURIComponent(title)}&page[limit]=1`);
-                if(kitsuRes.ok) {
+                if (kitsuRes.ok) {
                     const kitsuData = await kitsuRes.json();
                     if (kitsuData.data.length > 0) {
                         scores.kitsu = kitsuData.data[0].attributes.averageRating ? `${(kitsuData.data[0].attributes.averageRating / 10).toFixed(2)}` : 'N/A';
@@ -175,7 +183,7 @@
             return scores;
         }
 
-        // --- RENDER FUNCTIONS ---
+        // --- RENDER & UI FUNCTIONS ---
         function render() {
             if (state.isLoading) {
                 DOMElements.grid.innerHTML = '';
@@ -215,51 +223,46 @@
                 DOMElements.searchResults.innerHTML = `<p class="p-4 text-slate-400">No results found.</p>`;
                 return;
             }
-            DOMElements.searchResults.innerHTML = results.map(anime => `
-                <div class="flex items-center p-2 hover:bg-slate-700 cursor-pointer" onclick='handleAddAnime(${JSON.stringify(anime)})'>
+            DOMElements.searchResults.innerHTML = results.map(anime => {
+                // Cache the result for later use
+                state.apiCache.set(anime.id.toString(), anime);
+                return `
+                <div class="flex items-center p-2 hover:bg-slate-700 cursor-pointer" onclick='handleAddAnime(${anime.id})'>
                     <img src="${anime.coverImage.extraLarge}" class="w-10 h-14 object-cover rounded-sm mr-3">
                     <div>
                         <p class="font-semibold text-slate-200 text-sm">${anime.title.english || anime.title.romaji}</p>
-                        <p class="text-xs text-slate-400">${anime.format} - ${anime.seasonYear || 'N/A'}</p>
+                        <p class="text-xs text-slate-400">${anime.format || ''} - ${anime.seasonYear || 'N/A'}</p>
                     </div>
                 </div>
-            `).join('');
+            `}).join('');
             DOMElements.searchResults.classList.remove('hidden');
         }
 
         async function renderModal(anime) {
             const externalScores = await fetchExternalScores(anime.idMal, anime.title.english || anime.title.romaji);
-            const cleanDescription = anime.description ? anime.description.replace(/<br\s*\/?>/gi, ' ') : 'No description available.';
-            const dateAdded = new Date(anime.dateAdded).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+            const cleanDescription = anime.description ? anime.description.replace(/<br\s*\/?>/gi, ' ').replace(/&quot;/g, '"') : 'No description available.';
+            const dateAdded = anime.dateAdded ? new Date(anime.dateAdded).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Not recorded';
 
             DOMElements.modalContent.innerHTML = `
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 p-6">
-                    <div class="md:col-span-1">
-                        <img src="${anime.coverImage}" alt="${anime.title}" class="w-full aspect-[2/3] object-cover rounded-lg shadow-lg">
-                    </div>
-                    <div class="md:col-span-2">
+                    <div class="md:col-span-1"><img src="${anime.coverImage}" alt="${anime.title}" class="w-full aspect-[2/3] object-cover rounded-lg shadow-lg"></div>
+                    <div class="md:col-span-2 relative">
                         <h2 class="text-2xl font-bold text-white mb-2">${anime.title}</h2>
                         <p class="text-xs text-slate-400 mb-4">Added on ${dateAdded}</p>
-                        
                         <div class="flex items-center space-x-4 mb-4">
-                            <div class="score-item"><span class="score-source anilist">AniList</span><span class="score-value">${anime.score ? (anime.score / 10).toFixed(1) : 'N/A'}</span></div>
-                            <div class="score-item"><span class="score-source mal">MAL</span><span class="score-value">${externalScores.mal}</span></div>
-                            <div class="score-item"><span class="score-source kitsu">Kitsu</span><span class="score-value">${externalScores.kitsu}</span></div>
+                            <div class="score-item"><span class="score-source">AniList</span><span class="score-value">${anime.score ? (anime.score / 10).toFixed(1) : 'N/A'}</span></div>
+                            <div class="score-item"><span class="score-source">MAL</span><span class="score-value">${externalScores.mal}</span></div>
+                            <div class="score-item"><span class="score-source">Kitsu</span><span class="score-value">${externalScores.kitsu}</span></div>
                         </div>
-
                         <p class="text-sm text-slate-400 max-h-32 overflow-y-auto pr-2 mb-6">${cleanDescription}</p>
-
                         <div class="flex flex-wrap gap-2">
                             <button data-status="Watching" class="status-btn ${anime.status === 'Watching' ? 'active' : ''}" onclick="handleChangeStatus('${anime.anilistId}', 'Watching')">Watching</button>
                             <button data-status="Finished" class="status-btn ${anime.status === 'Finished' ? 'active' : ''}" onclick="handleChangeStatus('${anime.anilistId}', 'Finished')">Finished</button>
                             <button data-status="Planning" class="status-btn ${anime.status === 'Planning' ? 'active' : ''}" onclick="handleChangeStatus('${anime.anilistId}', 'Planning')">Planning</button>
                             <button data-status="Downloaded" class="status-btn ${anime.status === 'Downloaded' ? 'active' : ''}" onclick="handleChangeStatus('${anime.anilistId}', 'Downloaded')">Downloaded</button>
                         </div>
-                        
-                        <button class="absolute top-4 right-4 text-slate-500 hover:text-white" onclick="closeModal()">
-                            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
-                        </button>
-                        <button class="absolute bottom-4 right-4 text-sm text-red-500 hover:text-red-400 font-semibold" onclick="handleDelete('${anime.anilistId}')">Delete Anime</button>
+                        <button class="absolute top-0 right-0 text-slate-500 hover:text-white" onclick="closeModal()"><svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg></button>
+                        <button class="absolute bottom-0 right-0 text-sm text-red-500 hover:text-red-400 font-semibold" onclick="handleDelete('${anime.anilistId}')">Delete Anime</button>
                     </div>
                 </div>
                 <style>
@@ -274,6 +277,14 @@
                     .status-btn.active[data-status="Downloaded"] { background-color: #6366f1; border-color: #818cf8; color: white; }
                 </style>
             `;
+        }
+
+        function showToast(message) {
+            DOMElements.toast.textContent = message;
+            DOMElements.toast.classList.remove('hidden');
+            setTimeout(() => {
+                DOMElements.toast.classList.add('hidden');
+            }, 3000);
         }
 
         // --- EVENT HANDLERS & LOGIC ---
@@ -296,9 +307,13 @@
             state.searchTimeout = setTimeout(() => searchAniList(searchTerm), 300);
         }
         
-        window.handleAddAnime = (apiData) => {
+        window.handleAddAnime = (id) => {
+            const apiData = state.apiCache.get(id.toString());
+            if (!apiData) return;
+
             const anime = {
                 anilistId: apiData.id,
+                idMal: apiData.idMal,
                 title: apiData.title.english || apiData.title.romaji,
                 coverImage: apiData.coverImage.extraLarge,
                 status: state.activeStatus,
@@ -306,14 +321,21 @@
                 description: apiData.description,
                 dateAdded: new Date().toISOString()
             };
+            
             const existingIndex = state.animeList.findIndex(a => a.anilistId == anime.anilistId);
             if (existingIndex > -1) { state.animeList[existingIndex] = { ...state.animeList[existingIndex], ...anime }; } 
             else { state.animeList.push(anime); }
+
+            state.apiCache.set(anime.anilistId.toString(), anime);
             render();
             updateSheet({ action: 'addOrUpdate', data: anime });
+            showToast(`${anime.title} added to ${anime.status}`);
+            
             DOMElements.searchInput.value = '';
             DOMElements.searchResults.classList.add('hidden');
             DOMElements.searchInput.classList.remove('search-bar-active');
+            DOMElements.searchIcon.classList.remove('hidden');
+            DOMElements.closeSearchIcon.classList.add('hidden');
         };
 
         window.handleChangeStatus = (id, newStatus) => {
@@ -321,27 +343,30 @@
             if (animeIndex === -1) return;
             state.animeList[animeIndex].status = newStatus;
             updateSheet({ action: 'addOrUpdate', data: state.animeList[animeIndex] });
+            showToast(`${state.animeList[animeIndex].title} moved to ${newStatus}`);
             render();
             openModal(id); // Re-render modal to show active status
         };
 
         window.handleDelete = (id) => {
             if (!confirm('Are you sure you want to delete this anime?')) return;
+            const anime = state.animeList.find(a => a.anilistId == id);
             state.animeList = state.animeList.filter(a => a.anilistId != id);
             updateSheet({ action: 'delete', anilistId: id });
+            showToast(`${anime.title} deleted`);
             closeModal();
             render();
         };
 
         window.openModal = (id) => {
-            const animeDataFromList = state.animeList.find(a => a.anilistId == id);
-            if (!animeDataFromList) return;
+            const animeData = state.apiCache.get(id.toString());
+            if (!animeData) return;
             
             // Create a combined object for rendering
             const renderData = {
-                ...animeDataFromList,
-                idMal: state.animeList.find(a => a.anilistId == id)?.idMal, // Ensure we have idMal if it exists
-                title: { english: animeDataFromList.title, romaji: animeDataFromList.title }, // Mock title object
+                ...animeData,
+                title: animeData.title.english || animeData.title.romaji,
+                coverImage: animeData.coverImage.extraLarge || animeData.coverImage,
             };
 
             DOMElements.modalContent.innerHTML = `<div class="p-10 text-center text-lg">Loading details...</div>`;
@@ -354,18 +379,26 @@
         // --- INITIALIZATION ---
         function init() {
             if (!GOOGLE_SHEET_URL || GOOGLE_SHEET_URL === 'https://script.google.com/macros/s/AKfycbyWbU6QRsB7kx3T5vWgTYwGdIPay3rRDK5WxEo8wvT-zpJsADgc0EoIi3900C-X0Pu3/exec') {
-                DOMElements.stateIndicator.innerHTML = `<div class="bg-red-900/50 border border-red-700 text-red-300 px-4 py-3 rounded-lg"><p><strong>Configuration Needed!</strong> Please open the HTML file, find the <code>GOOGLE_SHEET_URL</code> variable, and paste your new Web App URL.</p></div>`;
+                DOMElements.stateIndicator.innerHTML = `<div class="bg-red-900/50 border border-red-700 text-red-300 px-4 py-3 rounded-lg"><p><strong>Configuration Needed!</strong> Please open this HTML file, find the <code>GOOGLE_SHEET_URL</code> variable, and paste your new Web App URL.</p></div>`;
                 return;
             }
             DOMElements.tabs.addEventListener('click', handleTabClick);
             DOMElements.searchInput.addEventListener('input', handleSearchInput);
             DOMElements.searchIcon.addEventListener('click', () => {
-                DOMElements.searchInput.classList.toggle('search-bar-active');
+                DOMElements.searchInput.classList.add('search-bar-active');
+                DOMElements.searchIcon.classList.add('hidden');
+                DOMElements.closeSearchIcon.classList.remove('hidden');
                 DOMElements.searchInput.focus();
+            });
+            DOMElements.closeSearchIcon.addEventListener('click', () => {
+                DOMElements.searchInput.classList.remove('search-bar-active');
+                DOMElements.searchIcon.classList.remove('hidden');
+                DOMElements.closeSearchIcon.classList.add('hidden');
+                DOMElements.searchResults.classList.add('hidden');
+                DOMElements.searchInput.value = '';
             });
             document.addEventListener('click', (e) => {
                 if (!DOMElements.searchContainer.contains(e.target)) {
-                    DOMElements.searchInput.classList.remove('search-bar-active');
                     DOMElements.searchResults.classList.add('hidden');
                 }
             });
