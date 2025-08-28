@@ -27,7 +27,8 @@
         .modal-backdrop-in { animation: fadeIn 0.3s ease-out forwards; }
         @keyframes toastIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         .toast-in { animation: toastIn 0.3s ease-out forwards; }
-
+        @keyframes shimmer { 0% { background-position: -1000px 0; } 100% { background-position: 1000px 0; } }
+        .shimmer { background: linear-gradient(to right, #1e293b 8%, #334155 18%, #1e293b 33%); background-size: 2000px 100%; animation: shimmer 2s infinite linear; }
         #searchInput.search-bar-active { width: 100%; max-width: 400px; opacity: 1; padding-left: 1rem; padding-right: 2.5rem; }
     </style>
 </head>
@@ -56,12 +57,9 @@
         <!-- Main Content -->
         <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div class="mb-6">
-                <nav class="flex space-x-2 sm:space-x-4 bg-slate-800 p-1.5 rounded-lg" id="tabs">
-                    <button data-status="Watching" class="tab tab-active px-3 py-2 text-sm sm:text-base font-medium rounded-md flex-1 transition custom-focus-ring">Watching</button>
-                    <button data-status="Finished" class="tab text-slate-400 hover:bg-slate-700/50 px-3 py-2 text-sm sm:text-base font-medium rounded-md flex-1 transition custom-focus-ring">Finished</button>
-                    <button data-status="Planning" class="tab text-slate-400 hover:bg-slate-700/50 px-3 py-2 text-sm sm:text-base font-medium rounded-md flex-1 transition custom-focus-ring">Planning</button>
-                    <button data-status="Downloaded" class="tab text-slate-400 hover:bg-slate-700/50 px-3 py-2 text-sm sm:text-base font-medium rounded-md flex-1 transition custom-focus-ring">Downloaded</button>
-                </nav>
+                <div id="tabs-container" class="flex items-center space-x-2 sm:space-x-4 bg-slate-800 p-1.5 rounded-lg overflow-x-auto">
+                    <!-- Tabs will be rendered here -->
+                </div>
             </div>
             
             <div id="anime-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 sm:gap-6"></div>
@@ -69,59 +67,72 @@
         </main>
     </div>
 
-    <!-- Modal -->
-    <div id="modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 hidden">
-        <div id="modal-backdrop" class="fixed inset-0 bg-black/70 backdrop-blur-sm modal-backdrop-in"></div>
-        <div id="modal-content" class="relative bg-surface rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto modal-in"></div>
-    </div>
+    <!-- Modals -->
+    <div id="modal-container"></div>
 
     <!-- Toast Notification -->
     <div id="toast" class="fixed bottom-5 right-5 bg-green-600 text-white py-2 px-4 rounded-lg shadow-lg hidden toast-in"></div>
 
     <script type="module">
         // --- CONFIGURATION ---
-        const GOOGLE_SHEET_URL = 'YOUR_NEW_GOOGLE_APPS_SCRIPT_URL'; // <-- PASTE YOUR NEW URL HERE
+        const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbzrX6LSAxi8Z2ouTtWTmMdiPr1JKiq8gCIfOsZH8H-CKZbe3SB1_VBN-aWnIK2yMftXnA/exec'; // <-- PASTE YOUR NEWEST URL HERE
         const ANILIST_API_URL = 'https://graphql.anilist.co';
         const JIKAN_API_URL = 'https://api.jikan.moe/v4';
         const KITSU_API_URL = 'https://kitsu.io/api/edge';
 
         // --- APPLICATION STATE ---
-        const state = { animeList: [], activeStatus: 'Watching', isLoading: true, searchTimeout: null, apiCache: new Map() };
+        const state = { lists: [], animeList: [], activeList: '', isLoading: true, searchTimeout: null, apiCache: new Map() };
 
         // --- DOM ELEMENTS ---
         const DOMElements = {
             grid: document.getElementById('anime-grid'),
-            tabs: document.getElementById('tabs'),
+            tabsContainer: document.getElementById('tabs-container'),
             searchInput: document.getElementById('searchInput'),
             searchIcon: document.getElementById('search-icon'),
             closeSearchIcon: document.getElementById('close-search-icon'),
             searchContainer: document.getElementById('search-container'),
             searchResults: document.getElementById('searchResults'),
             stateIndicator: document.getElementById('state-indicator'),
-            modal: document.getElementById('modal'),
-            modalBackdrop: document.getElementById('modal-backdrop'),
-            modalContent: document.getElementById('modal-content'),
+            modalContainer: document.getElementById('modal-container'),
             toast: document.getElementById('toast'),
         };
 
         // --- API FUNCTIONS ---
-        async function fetchUserList() {
+        async function fetchInitialData() {
             state.isLoading = true;
             render();
             try {
                 const response = await fetch(GOOGLE_SHEET_URL);
                 if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                state.animeList = await response.json();
+                const data = await response.json();
+                if (data.error) throw new Error(`Script error: ${data.error}`);
+                
+                state.lists = data.lists || [];
+                state.animeList = data.anime || [];
+                state.activeList = state.lists[0] || '';
+                
                 state.animeList.forEach(anime => state.apiCache.set(anime.anilistId.toString(), anime));
             } catch (error) {
-                console.error("Error fetching user list:", error);
-                DOMElements.stateIndicator.innerHTML = `<p class="text-red-400 text-lg">Failed to load your list.</p>`;
+                console.error("Error fetching initial data:", error);
+                DOMElements.stateIndicator.innerHTML = `<p class="text-red-400 text-lg">Failed to load your list. Check console for errors.</p>`;
             } finally {
                 state.isLoading = false;
                 render();
+                renderTabs();
             }
         }
 
+        async function postToSheet(payload) {
+            try {
+                await fetch(GOOGLE_SHEET_URL, {
+                    method: 'POST', mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+            } catch (error) { console.error("Error updating sheet:", error); }
+        }
+        
+        // Other API functions (searchAniList, fetchExternalScores) remain the same...
         async function searchAniList(searchTerm) {
             const query = `
                 query ($search: String, $page: Int, $perPage: Int) {
@@ -150,16 +161,6 @@
             } catch (error) { console.error("Error searching AniList:", error); }
         }
 
-        async function updateSheet(payload) {
-            try {
-                await fetch(GOOGLE_SHEET_URL, {
-                    method: 'POST', mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-            } catch (error) { console.error("Error updating sheet:", error); }
-        }
-        
         async function fetchExternalScores(malId, title) {
             const scores = { mal: 'N/A', kitsu: 'N/A' };
             if (malId) {
@@ -171,33 +172,53 @@
                     }
                 } catch (e) { console.error("Jikan API error:", e); }
             }
-            try {
-                const kitsuRes = await fetch(`${KITSU_API_URL}/anime?filter[text]=${encodeURIComponent(title)}&page[limit]=1`);
-                if (kitsuRes.ok) {
-                    const kitsuData = await kitsuRes.json();
-                    if (kitsuData.data.length > 0) {
-                        scores.kitsu = kitsuData.data[0].attributes.averageRating ? `${(kitsuData.data[0].attributes.averageRating / 10).toFixed(2)}` : 'N/A';
+            if (title) {
+                try {
+                    const kitsuRes = await fetch(`${KITSU_API_URL}/anime?filter[text]=${encodeURIComponent(title)}&page[limit]=1`);
+                    if (kitsuRes.ok) {
+                        const kitsuData = await kitsuRes.json();
+                        if (kitsuData.data.length > 0) {
+                            scores.kitsu = kitsuData.data[0].attributes.averageRating ? `${(kitsuData.data[0].attributes.averageRating / 10).toFixed(2)}` : 'N/A';
+                        }
                     }
-                }
-            } catch (e) { console.error("Kitsu API error:", e); }
+                } catch (e) { console.error("Kitsu API error:", e); }
+            }
             return scores;
         }
 
         // --- RENDER & UI FUNCTIONS ---
         function render() {
             if (state.isLoading) {
-                DOMElements.grid.innerHTML = '';
-                DOMElements.stateIndicator.innerHTML = `<div class="flex justify-center items-center space-x-2"><svg class="animate-spin h-8 w-8 text-sky-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><span class="text-lg font-medium text-slate-400">Loading...</span></div>`;
+                DOMElements.stateIndicator.innerHTML = '';
+                DOMElements.grid.innerHTML = Array(12).fill(0).map(() => `
+                    <div class="bg-surface rounded-lg shadow-lg">
+                        <div class="aspect-[2/3] w-full shimmer rounded-lg"></div>
+                        <div class="p-3"><div class="h-4 w-3/4 shimmer rounded"></div></div>
+                    </div>
+                `).join('');
                 return;
             }
-            const filteredList = state.animeList.filter(anime => anime.status === state.activeStatus);
-            if (filteredList.length === 0) {
+            const filteredList = state.animeList.filter(anime => anime.status === state.activeList);
+            if (filteredList.length === 0 && state.activeList) {
                 DOMElements.grid.innerHTML = '';
-                DOMElements.stateIndicator.innerHTML = `<div class="text-center"><h3 class="text-xl font-semibold text-slate-300">This list is empty</h3><p class="text-slate-500 mt-2">Use the search bar to add anime.</p></div>`;
+                DOMElements.stateIndicator.innerHTML = `<div class="text-center"><h3 class="text-xl font-semibold text-slate-300">This list is empty</h3><p class="text-slate-500 mt-2">Use the search bar to add anime to '${state.activeList}'.</p></div>`;
+                return;
+            }
+             if (state.lists.length === 0) {
+                DOMElements.grid.innerHTML = '';
+                DOMElements.stateIndicator.innerHTML = `<div class="text-center"><h3 class="text-xl font-semibold text-slate-300">Welcome!</h3><p class="text-slate-500 mt-2">Click 'Manage Lists' to create your first list.</p></div>`;
                 return;
             }
             DOMElements.stateIndicator.innerHTML = '';
             DOMElements.grid.innerHTML = filteredList.map((anime, index) => createAnimeCard(anime, index)).join('');
+        }
+
+        function renderTabs() {
+            const tabsHTML = state.lists.map(list => 
+                `<button data-list="${list}" class="tab whitespace-nowrap px-3 py-2 text-sm sm:text-base font-medium rounded-md flex-1 transition custom-focus-ring ${state.activeList === list ? 'tab-active' : 'text-slate-400 hover:bg-slate-700/50'}">${list}</button>`
+            ).join('');
+            const manageButtonHTML = `<button id="manage-lists-btn" class="ml-2 p-2 rounded-md hover:bg-slate-700 transition"><svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg></button>`;
+            DOMElements.tabsContainer.innerHTML = tabsHTML + manageButtonHTML;
         }
 
         function createAnimeCard(anime, index) {
@@ -211,58 +232,47 @@
                             <span>${score}</span>
                         </div>
                     </div>
-                    <div class="pt-3 px-1">
-                        <h3 class="font-semibold text-sm text-slate-200 truncate group-hover:text-sky-400 transition-colors">${anime.title}</h3>
-                    </div>
-                </div>
-            `;
+                    <div class="pt-3 px-1"><h3 class="font-semibold text-sm text-slate-200 truncate group-hover:text-sky-400 transition-colors">${anime.title}</h3></div>
+                </div>`;
         }
 
         function renderSearchResults(results) {
             if (!results || results.length === 0) {
-                DOMElements.searchResults.innerHTML = `<p class="p-4 text-slate-400">No results found.</p>`;
-                return;
+                DOMElements.searchResults.innerHTML = `<p class="p-4 text-slate-400">No results found.</p>`; return;
             }
             DOMElements.searchResults.innerHTML = results.map(anime => {
-                // Cache the result for later use
                 state.apiCache.set(anime.id.toString(), anime);
-                return `
-                <div class="flex items-center p-2 hover:bg-slate-700 cursor-pointer" onclick='handleAddAnime(${anime.id})'>
+                return `<div class="flex items-center p-2 hover:bg-slate-700 cursor-pointer" onclick='handleAddAnime(${anime.id})'>
                     <img src="${anime.coverImage.extraLarge}" class="w-10 h-14 object-cover rounded-sm mr-3">
-                    <div>
-                        <p class="font-semibold text-slate-200 text-sm">${anime.title.english || anime.title.romaji}</p>
-                        <p class="text-xs text-slate-400">${anime.format || ''} - ${anime.seasonYear || 'N/A'}</p>
-                    </div>
-                </div>
-            `}).join('');
+                    <div><p class="font-semibold text-slate-200 text-sm">${anime.title.english || anime.title.romaji}</p><p class="text-xs text-slate-400">${anime.format || ''} - ${anime.seasonYear || 'N/A'}</p></div>
+                </div>`}).join('');
             DOMElements.searchResults.classList.remove('hidden');
         }
 
-        async function renderModal(anime) {
-            const externalScores = await fetchExternalScores(anime.idMal, anime.title.english || anime.title.romaji);
-            const cleanDescription = anime.description ? anime.description.replace(/<br\s*\/?>/gi, ' ').replace(/&quot;/g, '"') : 'No description available.';
+        function renderModal(anime) {
             const dateAdded = anime.dateAdded ? new Date(anime.dateAdded).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Not recorded';
-
-            DOMElements.modalContent.innerHTML = `
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 p-6">
-                    <div class="md:col-span-1"><img src="${anime.coverImage}" alt="${anime.title}" class="w-full aspect-[2/3] object-cover rounded-lg shadow-lg"></div>
-                    <div class="md:col-span-2 relative">
-                        <h2 class="text-2xl font-bold text-white mb-2">${anime.title}</h2>
-                        <p class="text-xs text-slate-400 mb-4">Added on ${dateAdded}</p>
-                        <div class="flex items-center space-x-4 mb-4">
-                            <div class="score-item"><span class="score-source">AniList</span><span class="score-value">${anime.score ? (anime.score / 10).toFixed(1) : 'N/A'}</span></div>
-                            <div class="score-item"><span class="score-source">MAL</span><span class="score-value">${externalScores.mal}</span></div>
-                            <div class="score-item"><span class="score-source">Kitsu</span><span class="score-value">${externalScores.kitsu}</span></div>
+            const cleanDescription = anime.description ? anime.description.replace(/<br\s*\/?>/gi, ' ').replace(/&quot;/g, '"').substring(0, 400) + (anime.description.length > 400 ? '...' : '') : 'No description available.';
+            
+            const modalHTML = `
+                <div id="modal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div id="modal-backdrop" class="fixed inset-0 bg-black/70 backdrop-blur-sm modal-backdrop-in" onclick="closeModal()"></div>
+                    <div id="modal-content" class="relative bg-surface rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto modal-in">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 p-6">
+                            <div class="md:col-span-1"><img src="${anime.coverImage}" alt="${anime.title}" class="w-full aspect-[2/3] object-cover rounded-lg shadow-lg"></div>
+                            <div class="md:col-span-2 relative">
+                                <h2 class="text-2xl font-bold text-white mb-2 pr-8">${anime.title}</h2>
+                                <p class="text-xs text-slate-400 mb-4">Added on ${dateAdded}</p>
+                                <div id="external-scores" class="flex items-center space-x-4 mb-4">
+                                    <div class="score-item"><span class="score-source">AniList</span><span class="score-value">${anime.score ? (anime.score / 10).toFixed(1) : 'N/A'}</span></div>
+                                    <div class="score-item"><span class="score-source">MAL</span><span class="score-value shimmer h-5 w-8 rounded"></span></div>
+                                    <div class="score-item"><span class="score-source">Kitsu</span><span class="score-value shimmer h-5 w-8 rounded"></span></div>
+                                </div>
+                                <p class="text-sm text-slate-400 max-h-32 overflow-y-auto pr-2 mb-6">${cleanDescription}</p>
+                                <div class="flex flex-wrap gap-2">${state.lists.map(list => `<button data-status="${list}" class="status-btn ${anime.status === list ? 'active' : ''}" onclick="handleChangeStatus('${anime.anilistId}', '${list}')">${list}</button>`).join('')}</div>
+                                <button class="absolute top-0 right-0 text-slate-500 hover:text-white transition-colors" onclick="closeModal()"><svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg></button>
+                                <button class="absolute bottom-0 right-0 text-sm text-red-500 hover:text-red-400 font-semibold transition-colors" onclick="handleDelete('${anime.anilistId}')">Delete Anime</button>
+                            </div>
                         </div>
-                        <p class="text-sm text-slate-400 max-h-32 overflow-y-auto pr-2 mb-6">${cleanDescription}</p>
-                        <div class="flex flex-wrap gap-2">
-                            <button data-status="Watching" class="status-btn ${anime.status === 'Watching' ? 'active' : ''}" onclick="handleChangeStatus('${anime.anilistId}', 'Watching')">Watching</button>
-                            <button data-status="Finished" class="status-btn ${anime.status === 'Finished' ? 'active' : ''}" onclick="handleChangeStatus('${anime.anilistId}', 'Finished')">Finished</button>
-                            <button data-status="Planning" class="status-btn ${anime.status === 'Planning' ? 'active' : ''}" onclick="handleChangeStatus('${anime.anilistId}', 'Planning')">Planning</button>
-                            <button data-status="Downloaded" class="status-btn ${anime.status === 'Downloaded' ? 'active' : ''}" onclick="handleChangeStatus('${anime.anilistId}', 'Downloaded')">Downloaded</button>
-                        </div>
-                        <button class="absolute top-0 right-0 text-slate-500 hover:text-white" onclick="closeModal()"><svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg></button>
-                        <button class="absolute bottom-0 right-0 text-sm text-red-500 hover:text-red-400 font-semibold" onclick="handleDelete('${anime.anilistId}')">Delete Anime</button>
                     </div>
                 </div>
                 <style>
@@ -271,66 +281,90 @@
                     .score-value { font-size: 16px; font-weight: bold; color: white; }
                     .status-btn { padding: 8px 16px; border-radius: 8px; font-semibold; transition: all 0.2s; border: 2px solid transparent; background-color: #334155; }
                     .status-btn:hover { background-color: #475569; }
-                    .status-btn.active[data-status="Watching"] { background-color: #0ea5e9; border-color: #38bdf8; color: white; }
-                    .status-btn.active[data-status="Finished"] { background-color: #22c55e; border-color: #4ade80; color: white; }
-                    .status-btn.active[data-status="Planning"] { background-color: #f59e0b; border-color: #facc15; color: white; }
-                    .status-btn.active[data-status="Downloaded"] { background-color: #6366f1; border-color: #818cf8; color: white; }
-                </style>
-            `;
+                    .status-btn.active { background-color: var(--primary); border-color: var(--primary); color: white; }
+                </style>`;
+            DOMElements.modalContainer.innerHTML = modalHTML;
+
+            fetchExternalScores(anime.idMal, anime.title).then(scores => {
+                const scoresEl = document.getElementById('external-scores');
+                if(scoresEl) {
+                    scoresEl.innerHTML = `
+                        <div class="score-item"><span class="score-source">AniList</span><span class="score-value">${anime.score ? (anime.score / 10).toFixed(1) : 'N/A'}</span></div>
+                        <div class="score-item"><span class="score-source">MAL</span><span class="score-value">${scores.mal}</span></div>
+                        <div class="score-item"><span class="score-source">Kitsu</span><span class="score-value">${scores.kitsu}</span></div>
+                    `;
+                }
+            });
+        }
+        
+        function renderManageListsModal() {
+            let listsHTML = state.lists.map(list => `
+                <div class="flex items-center bg-slate-700 p-2 rounded-md">
+                    <input type="text" value="${list}" class="list-input flex-grow bg-transparent focus:outline-none">
+                    <button class="text-slate-400 hover:text-red-500" onclick="this.parentElement.remove()">
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                    </button>
+                </div>
+            `).join('');
+
+            const modalHTML = `
+                <div id="modal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div id="modal-backdrop" class="fixed inset-0 bg-black/70 backdrop-blur-sm modal-backdrop-in" onclick="closeModal()"></div>
+                    <div id="modal-content" class="relative bg-surface rounded-lg shadow-xl w-full max-w-md modal-in p-6">
+                        <h2 class="text-xl font-bold text-white mb-4">Manage Lists</h2>
+                        <div id="list-editor" class="space-y-2 mb-4">${listsHTML}</div>
+                        <button id="add-list-btn" class="w-full text-sm bg-slate-700 hover:bg-slate-600 rounded-md p-2 transition-colors">Add New List</button>
+                        <div class="flex justify-end space-x-2 mt-6">
+                            <button class="px-4 py-2 rounded-md bg-slate-600 hover:bg-slate-500 transition-colors" onclick="closeModal()">Cancel</button>
+                            <button class="px-4 py-2 rounded-md bg-sky-600 hover:bg-sky-500 text-white transition-colors" onclick="handleSaveLists()">Save Changes</button>
+                        </div>
+                    </div>
+                </div>`;
+            DOMElements.modalContainer.innerHTML = modalHTML;
+            document.getElementById('add-list-btn').addEventListener('click', () => {
+                const editor = document.getElementById('list-editor');
+                const newItem = document.createElement('div');
+                newItem.className = "flex items-center bg-slate-700 p-2 rounded-md";
+                newItem.innerHTML = `
+                    <input type="text" placeholder="New list name" class="list-input flex-grow bg-transparent focus:outline-none">
+                    <button class="text-slate-400 hover:text-red-500" onclick="this.parentElement.remove()">
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                    </button>`;
+                editor.appendChild(newItem);
+                newItem.querySelector('input').focus();
+            });
         }
 
         function showToast(message) {
             DOMElements.toast.textContent = message;
             DOMElements.toast.classList.remove('hidden');
-            setTimeout(() => {
-                DOMElements.toast.classList.add('hidden');
-            }, 3000);
+            setTimeout(() => { DOMElements.toast.classList.add('hidden'); }, 3000);
         }
 
         // --- EVENT HANDLERS & LOGIC ---
         function handleTabClick(e) {
             const button = e.target.closest('button.tab');
             if (!button) return;
-            state.activeStatus = button.dataset.status;
-            DOMElements.tabs.querySelectorAll('.tab').forEach(tab => {
-                tab.classList.toggle('tab-active', tab.dataset.status === state.activeStatus);
-                tab.classList.toggle('text-slate-400', tab.dataset.status !== state.activeStatus);
-                tab.classList.toggle('hover:bg-slate-700/50', tab.dataset.status !== state.activeStatus);
-            });
+            state.activeList = button.dataset.list;
+            renderTabs();
             render();
-        }
-
-        function handleSearchInput(e) {
-            clearTimeout(state.searchTimeout);
-            const searchTerm = e.target.value.trim();
-            if (searchTerm.length < 3) { DOMElements.searchResults.classList.add('hidden'); return; }
-            state.searchTimeout = setTimeout(() => searchAniList(searchTerm), 300);
         }
         
         window.handleAddAnime = (id) => {
             const apiData = state.apiCache.get(id.toString());
             if (!apiData) return;
-
             const anime = {
-                anilistId: apiData.id,
-                idMal: apiData.idMal,
-                title: apiData.title.english || apiData.title.romaji,
-                coverImage: apiData.coverImage.extraLarge,
-                status: state.activeStatus,
-                score: apiData.averageScore,
-                description: apiData.description,
-                dateAdded: new Date().toISOString()
+                anilistId: apiData.id, idMal: apiData.idMal, title: apiData.title.english || apiData.title.romaji,
+                coverImage: apiData.coverImage.extraLarge, status: state.activeList || state.lists[0], score: apiData.averageScore,
+                description: apiData.description, dateAdded: new Date().toISOString()
             };
-            
             const existingIndex = state.animeList.findIndex(a => a.anilistId == anime.anilistId);
             if (existingIndex > -1) { state.animeList[existingIndex] = { ...state.animeList[existingIndex], ...anime }; } 
             else { state.animeList.push(anime); }
-
             state.apiCache.set(anime.anilistId.toString(), anime);
             render();
-            updateSheet({ action: 'addOrUpdate', data: anime });
+            postToSheet({ action: 'addOrUpdateAnime', data: anime });
             showToast(`${anime.title} added to ${anime.status}`);
-            
             DOMElements.searchInput.value = '';
             DOMElements.searchResults.classList.add('hidden');
             DOMElements.searchInput.classList.remove('search-bar-active');
@@ -338,52 +372,68 @@
             DOMElements.closeSearchIcon.classList.add('hidden');
         };
 
-        window.handleChangeStatus = (id, newStatus) => {
+        window.handleChangeStatus = (id, newList) => {
             const animeIndex = state.animeList.findIndex(a => a.anilistId == id);
             if (animeIndex === -1) return;
-            state.animeList[animeIndex].status = newStatus;
-            updateSheet({ action: 'addOrUpdate', data: state.animeList[animeIndex] });
-            showToast(`${state.animeList[animeIndex].title} moved to ${newStatus}`);
+            const anime = state.animeList[animeIndex];
+            anime.status = newList;
+            postToSheet({ action: 'addOrUpdateAnime', data: anime });
+            showToast(`${anime.title} moved to ${newList}`);
             render();
-            openModal(id); // Re-render modal to show active status
+            openModal(id);
         };
 
         window.handleDelete = (id) => {
             if (!confirm('Are you sure you want to delete this anime?')) return;
             const anime = state.animeList.find(a => a.anilistId == id);
             state.animeList = state.animeList.filter(a => a.anilistId != id);
-            updateSheet({ action: 'delete', anilistId: id });
+            postToSheet({ action: 'deleteAnime', anilistId: id });
             showToast(`${anime.title} deleted`);
             closeModal();
             render();
         };
 
+        window.handleSaveLists = () => {
+            const inputs = document.querySelectorAll('#list-editor .list-input');
+            const newLists = Array.from(inputs).map(input => input.value.trim()).filter(Boolean);
+            const oldActiveList = state.activeList;
+            state.lists = newLists;
+            // If the previously active list was deleted, default to the first new list
+            if (!state.lists.includes(oldActiveList)) {
+                state.activeList = state.lists[0] || '';
+            }
+            postToSheet({ action: 'manageLists', lists: newLists });
+            showToast('Lists updated successfully');
+            closeModal();
+            renderTabs();
+            render();
+        };
+
         window.openModal = (id) => {
             const animeData = state.apiCache.get(id.toString());
-            if (!animeData) return;
-            
-            // Create a combined object for rendering
-            const renderData = {
-                ...animeData,
-                title: animeData.title.english || animeData.title.romaji,
-                coverImage: animeData.coverImage.extraLarge || animeData.coverImage,
-            };
-
-            DOMElements.modalContent.innerHTML = `<div class="p-10 text-center text-lg">Loading details...</div>`;
-            DOMElements.modal.classList.remove('hidden');
+            if (!animeData) { console.error("Data not found in cache for ID:", id); return; }
+            const renderData = { ...animeData, title: animeData.title.english || animeData.title.romaji, coverImage: animeData.coverImage.extraLarge || animeData.coverImage };
             renderModal(renderData);
         };
 
-        window.closeModal = () => DOMElements.modal.classList.add('hidden');
+        window.closeModal = () => { DOMElements.modalContainer.innerHTML = ''; };
 
         // --- INITIALIZATION ---
         function init() {
-            if (!GOOGLE_SHEET_URL || GOOGLE_SHEET_URL === 'https://script.google.com/macros/s/AKfycbz031C9V1U_qtrVF5535QoD1vKOQPgk_S_iab72qcQulDIUg5y0VQwW5d71z5TUyqmB/exec') {
+            if (!GOOGLE_SHEET_URL || GOOGLE_SHEET_URL.includes('YOUR_NEW_GOOGLE_APPS_SCRIPT_URL')) {
                 DOMElements.stateIndicator.innerHTML = `<div class="bg-red-900/50 border border-red-700 text-red-300 px-4 py-3 rounded-lg"><p><strong>Configuration Needed!</strong> Please open this HTML file, find the <code>GOOGLE_SHEET_URL</code> variable, and paste your new Web App URL.</p></div>`;
                 return;
             }
-            DOMElements.tabs.addEventListener('click', handleTabClick);
-            DOMElements.searchInput.addEventListener('input', handleSearchInput);
+            DOMElements.tabsContainer.addEventListener('click', (e) => {
+                if (e.target.closest('#manage-lists-btn')) renderManageListsModal();
+                else handleTabClick(e);
+            });
+            DOMElements.searchInput.addEventListener('input', (e) => {
+                clearTimeout(state.searchTimeout);
+                const searchTerm = e.target.value.trim();
+                if (searchTerm.length < 3) { DOMElements.searchResults.classList.add('hidden'); return; }
+                state.searchTimeout = setTimeout(() => searchAniList(searchTerm), 300);
+            });
             DOMElements.searchIcon.addEventListener('click', () => {
                 DOMElements.searchInput.classList.add('search-bar-active');
                 DOMElements.searchIcon.classList.add('hidden');
@@ -402,8 +452,7 @@
                     DOMElements.searchResults.classList.add('hidden');
                 }
             });
-            DOMElements.modalBackdrop.addEventListener('click', closeModal);
-            fetchUserList();
+            fetchInitialData();
         }
         init();
     </script>
