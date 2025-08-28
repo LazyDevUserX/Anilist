@@ -82,7 +82,8 @@
 
     <script type="module">
         // --- CONFIGURATION ---
-        const https://script.google.com/macros/s/AKfycbztKazydklI04J6XnqfGMiOPeYJW5yikYDctac14k_AJd0fb6HuGJ0e1VzAXmBnhxnptw/exec = 'YOUR_NEW_GOOGLE_APPS_SCRIPT_URL'; // <-- PASTE YOUR NEWEST URL HERE
+        // THIS IS THE MOST IMPORTANT PART. MAKE SURE THIS URL IS FROM YOUR LATEST DEPLOYMENT.
+        const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycby-SU1fCpwvYZ2QDDM6lrYSlKfn0QARrM_TZUPs1rfNwerBzxmbd6RPNxxzK30ekJxUNw/exec'; 
         const ANILIST_API_URL = 'https://graphql.anilist.co';
         const JIKAN_API_URL = 'https://api.jikan.moe/v4';
         const KITSU_API_URL = 'https://kitsu.io/api/edge';
@@ -109,8 +110,7 @@
             const cachedData = localStorage.getItem('animeTrackerCache');
             if (cachedData) {
                 const { lists, anime, timestamp } = JSON.parse(cachedData);
-                // Use cache if it's less than an hour old
-                if (Date.now() - timestamp < 3600000) {
+                if (Date.now() - timestamp < 3600000) { // Cache is valid for 1 hour
                     state.lists = lists || [];
                     state.animeList = anime || [];
                     state.activeList = state.lists[0] || '';
@@ -118,10 +118,10 @@
                     state.animeList.forEach(anime => state.apiCache.set(anime.anilistId.toString(), anime));
                     render();
                     renderTabs();
-                    return true; // Cache is fresh and loaded
+                    return true;
                 }
             }
-            return false; // No fresh cache
+            return false;
         }
 
         function saveToCache() {
@@ -135,7 +135,7 @@
 
         async function syncWithSheet() {
             try {
-                const response = await fetch(https://script.google.com/macros/s/AKfycbztKazydklI04J6XnqfGMiOPeYJW5yikYDctac14k_AJd0fb6HuGJ0e1VzAXmBnhxnptw/exec);
+                const response = await fetch(GOOGLE_SHEET_URL);
                 if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                 const data = await response.json();
                 if (data.error) throw new Error(`Script error: ${data.error}`);
@@ -160,12 +160,22 @@
 
         async function postToSheet(payload) {
             try {
-                await fetch(https://script.google.com/macros/s/AKfycbztKazydklI04J6XnqfGMiOPeYJW5yikYDctac14k_AJd0fb6HuGJ0e1VzAXmBnhxnptw/exec, {
-                    method: 'POST', mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-            } catch (error) { console.error("Error updating sheet:", error); }
+                // This uses 'sendBeacon' which is more reliable for 'no-cors' requests
+                const blob = new Blob([JSON.stringify(payload)], { type: 'application/json; charset=UTF-8' });
+                navigator.sendBeacon(GOOGLE_SHEET_URL, blob);
+            } catch (error) {
+                console.error("Error updating sheet:", error);
+                // Fallback to fetch for older browsers
+                try {
+                    await fetch(GOOGLE_SHEET_URL, {
+                        method: 'POST', mode: 'no-cors',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                } catch (fetchError) {
+                    console.error("Fetch fallback also failed:", fetchError);
+                }
+            }
         }
         
         async function searchAniList(searchTerm) {
@@ -458,8 +468,8 @@
 
         // --- INITIALIZATION ---
         function init() {
-            if (!https://script.google.com/macros/s/AKfycbztKazydklI04J6XnqfGMiOPeYJW5yikYDctac14k_AJd0fb6HuGJ0e1VzAXmBnhxnptw/exec || https://script.google.com/macros/s/AKfycbztKazydklI04J6XnqfGMiOPeYJW5yikYDctac14k_AJd0fb6HuGJ0e1VzAXmBnhxnptw/exec.includes('https://script.google.com/macros/s/AKfycbztKazydklI04J6XnqfGMiOPeYJW5yikYDctac14k_AJd0fb6HuGJ0e1VzAXmBnhxnptw/exec')) {
-                DOMElements.stateIndicator.innerHTML = `<div class="bg-red-900/50 border border-red-700 text-red-300 px-4 py-3 rounded-lg"><p><strong>Configuration Needed!</strong> Please open this HTML file, find the <code>https://script.google.com/macros/s/AKfycbztKazydklI04J6XnqfGMiOPeYJW5yikYDctac14k_AJd0fb6HuGJ0e1VzAXmBnhxnptw/exec</code> variable, and paste your new Web App URL.</p></div>`;
+            if (!GOOGLE_SHEET_URL || GOOGLE_SHEET_URL.includes('YOUR_NEW_GOOGLE_APPS_SCRIPT_URL')) {
+                DOMElements.stateIndicator.innerHTML = `<div class="bg-red-900/50 border border-red-700 text-red-300 px-4 py-3 rounded-lg"><p><strong>Configuration Needed!</strong> Please open this HTML file, find the <code>GOOGLE_SHEET_URL</code> variable, and paste your new Web App URL.</p></div>`;
                 return;
             }
             DOMElements.tabsContainer.addEventListener('click', (e) => {
