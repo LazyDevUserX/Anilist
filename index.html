@@ -3,623 +3,360 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AnimeTracker — Your Personal AniList</title>
-  <meta name="color-scheme" content="dark" />
-
-  <!-- Tailwind (CDN) -->
+  <title>AnimeTracker</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            bg: '#0B0F18',
-            surface: '#121722',
-            surface2: '#1a2232',
-            brand: {
-              DEFAULT: '#38bdf8',
-              600: '#0891b2',
-            },
-          },
-          boxShadow: {
-            glass: '0 10px 25px -10px rgba(0,0,0,0.5)',
-          },
-          keyframes: {
-            in: { '0%': { opacity: 0, transform: 'translateY(8px)' }, '100%': { opacity: 1, transform: 'translateY(0)' } },
-            shimmer: {
-              '0%': { backgroundPosition: '-200% 0' },
-              '100%': { backgroundPosition: '200% 0' },
-            },
-          },
-          animation: {
-            in: 'in .25s ease-out both',
-            shimmer: 'shimmer 2s linear infinite',
-          },
-        },
-      },
-    };
-  </script>
-
-  <!-- Inter font -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-
   <style>
-    :root { --ring: #38bdf8; }
-    html, body { height: 100%; }
-    body { font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial, 'Apple Color Emoji', 'Segoe UI Emoji'; background: #0B0F18; }
-    .scrollbar::-webkit-scrollbar { width: 10px; height: 10px; }
-    .scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 999px; }
-    .scrollbar::-webkit-scrollbar-track { background: transparent; }
-    .focus-ring:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
-    .skeleton { background: linear-gradient(90deg, #111827 25%, #1f2937 37%, #111827 63%); background-size: 400% 100%; animation: shimmer 1.4s ease infinite; }
+    :root { --bg:#0B0F18; --surface:#121722; --muted:#94a3b8; --ink:#e2e8f0; --pri:#38bdf8; }
+    html,body { height:100%; }
+    body { font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji"; background:var(--bg); color:var(--ink); }
+    /* Fix: some buttons not clickable due to overlay → unify stacking contexts */
+    header, main, #modal-root { position: relative; z-index: 0; }
+    #modal-root { z-index: 50; }
+    .btn { @apply inline-flex items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold transition; }
+    .btn-ghost { @apply hover:bg-slate-700/60; }
+    .btn-pri { background:var(--pri); color:#001018; }
+    .btn-pri:hover { filter:brightness(1.1); }
+    .card { @apply rounded-2xl bg-slate-800/70 border border-slate-700/60 shadow-xl; }
+    .skeleton { background: linear-gradient(90deg, #1f2937 25%, #374151 37%, #1f2937 63%); background-size: 400% 100%; animation: shimmer 1.2s ease-in-out infinite; }
+    @keyframes shimmer { 0%{background-position:100% 0} 100%{background-position:-100% 0} }
+    .scrollbar::-webkit-scrollbar { width: 10px; height:10px }
+    .scrollbar::-webkit-scrollbar-thumb { background:#334155; border-radius:8px }
+    .scrollbar::-webkit-scrollbar-track { background:#0f172a }
+    .clickable { cursor:pointer }
   </style>
 </head>
-<body class="text-slate-200">
-  <!-- App Shell -->
-  <div id="app" class="min-h-screen grid grid-rows-[auto,1fr]">
+<body>
+  <div id="app" class="min-h-screen flex flex-col">
     <!-- Header -->
-    <header class="sticky top-0 z-40 backdrop-blur supports-[backdrop-filter]:bg-slate-900/60 bg-slate-900/80 border-b border-slate-800">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center gap-3">
-        <div class="flex items-center gap-2 select-none">
-          <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-brand to-cyan-600 grid place-items-center text-slate-900 font-black">A</div>
-          <div class="text-xl font-bold tracking-tight">Anime<span class="text-brand">Tracker</span></div>
+    <header class="sticky top-0 z-40 w-full border-b border-slate-800 bg-slate-900/80 backdrop-blur">
+      <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="h-8 w-8 rounded-xl bg-sky-400/20 grid place-items-center"><span class="text-sky-400 font-extrabold">A</span></div>
+          <h1 class="text-xl sm:text-2xl font-extrabold"><span class="text-sky-400">Anime</span>Tracker</h1>
         </div>
-
-        <!-- Search -->
-        <div class="relative flex-1 max-w-xl ml-auto">
-          <input id="searchInput" placeholder="Search anime…" class="w-full focus-ring focus:outline-none bg-slate-800/80 border border-slate-700/80 rounded-2xl pl-10 pr-12 py-2.5 text-sm placeholder-slate-400 shadow-glass" />
-          <svg class="absolute left-3 top-2.5 h-5 w-5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35"/><circle cx="11" cy="11" r="7"/></svg>
-          <button id="clearSearch" class="absolute right-2 top-2 hidden rounded-full p-1 hover:bg-slate-700/80 focus-ring" aria-label="Clear search">
-            <svg class="h-5 w-5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-          </button>
-          <div id="searchResults" class="absolute mt-2 w-full max-h-[22rem] overflow-auto scrollbar bg-slate-900/95 border border-slate-700/80 rounded-xl shadow-xl hidden"></div>
-        </div>
-
-        <div class="flex items-center gap-2 ml-2">
-          <button id="settingsBtn" class="px-3 py-2 rounded-xl hover:bg-slate-800 border border-slate-700 focus-ring" title="Settings">
-            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>
+        <div class="flex items-center gap-2">
+          <div class="relative">
+            <input id="searchInput" autocomplete="off" class="w-56 sm:w-72 rounded-xl bg-slate-800 border border-slate-700 px-3 py-2 pr-10 text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500" placeholder="Search anime (AniList)…" />
+            <button id="searchBtn" class="absolute right-1 top-1 btn btn-ghost" title="Search">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.2-5.2m1.7-4.5a7.5 7.5 0 11-15 0 7.5 7.5 0 0115 0z"/></svg>
+            </button>
+            <div id="searchResults" class="absolute mt-2 w-[min(90vw,28rem)] max-h-96 overflow-auto scrollbar hidden card p-1"></div>
+          </div>
+          <button id="manageBtn" class="btn btn-ghost" title="Manage Lists">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m6-6H6"/></svg>
           </button>
         </div>
       </div>
     </header>
 
-    <!-- Content -->
-    <main class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 grid gap-6">
-      <!-- Tabs + actions -->
-      <section class="flex flex-wrap items-center gap-3">
-        <div id="tabs" class="flex flex-wrap gap-2"></div>
-        <button id="manageListsBtn" class="rounded-xl px-3 py-2 bg-slate-800/80 border border-slate-700 hover:bg-slate-700/70 text-sm focus-ring">Manage Lists</button>
-        <div class="ml-auto flex items-center gap-2">
-          <select id="sortSelect" class="bg-slate-800/80 border border-slate-700 rounded-xl px-3 py-2 text-sm focus-ring">
-            <option value="date_desc">Newest</option>
-            <option value="date_asc">Oldest</option>
-            <option value="title_asc">Title A–Z</option>
-            <option value="title_desc">Title Z–A</option>
-            <option value="score_desc">Score ↓</option>
-            <option value="score_asc">Score ↑</option>
-          </select>
-          <button id="exportBtn" class="rounded-xl px-3 py-2 bg-slate-800/80 border border-slate-700 hover:bg-slate-700/70 text-sm focus-ring">Export JSON</button>
-          <label class="rounded-xl px-3 py-2 bg-slate-800/80 border border-slate-700 hover:bg-slate-700/70 text-sm cursor-pointer focus-ring">
-            Import <input id="importFile" type="file" accept="application/json" class="hidden" />
-          </label>
-        </div>
-      </section>
+    <!-- Tabs -->
+    <div class="w-full border-b border-slate-800">
+      <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div id="tabs" class="flex gap-2 overflow-x-auto py-2 scrollbar"></div>
+      </div>
+    </div>
 
-      <!-- Grid -->
-      <section>
-        <div id="grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4"></div>
-        <div id="emptyState" class="hidden text-center py-20 text-slate-400">This list is empty. Use the search bar to add anime.</div>
-      </section>
+    <!-- Main -->
+    <main class="mx-auto max-w-7xl flex-1 w-full px-4 sm:px-6 lg:px-8 py-6">
+      <div id="state" class="py-8 text-center text-slate-400"></div>
+      <div id="grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4"></div>
     </main>
   </div>
 
-  <!-- Modals root -->
-  <div id="modals"></div>
-
-  <!-- Toast -->
-  <div id="toast" class="fixed bottom-5 right-5 z-[100] hidden"></div>
+  <!-- Modal root & Toast -->
+  <div id="modal-root"></div>
+  <div id="toast" class="fixed bottom-4 right-4 hidden px-4 py-2 rounded-xl bg-emerald-600 text-white shadow-lg"></div>
 
   <script type="module">
-    // =======================
-    // CONFIG (editable in UI)
-    // =======================
-    const DEFAULT_LISTS = ['Watching', 'Planned', 'Completed', 'On Hold', 'Dropped'];
-    const CFG = {
-      GAS_URL: localStorage.getItem('atracker_gas_url') || '',
-      CACHE_TTL: 1000 * 60 * 60, // 1 hour
-      ANILIST: 'https://graphql.anilist.co',
-      JIKAN: 'https://api.jikan.moe/v4',
-      KITSU: 'https://kitsu.io/api/edge',
-    };
+    // ========= CONFIG (embedded; no settings screen) =========
+    // IMPORTANT: Replace with YOUR deployed Apps Script Web App URL (must end with /exec)
+    const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbzJKB-viAwLEtUcS_mQQUi4wr0QzWc181kVC826fCQiwzYYV3DyI-77jRoWqo4yQtth/exec';
+    const ANILIST_API_URL = 'https://graphql.anilist.co';
 
-    // =======================
-    // STATE & HELPERS
-    // =======================
+    if (!GOOGLE_SHEET_URL || GOOGLE_SHEET_URL.includes('PASTE_')) {
+      alert('Configure GOOGLE_SHEET_URL inside the HTML first.');
+    }
+
+    // ========= STATE (no localStorage caching per client request) =========
     const state = {
-      lists: JSON.parse(localStorage.getItem('atracker_lists') || '[]'),
-      active: localStorage.getItem('atracker_active') || '',
-      anime: JSON.parse(localStorage.getItem('atracker_anime') || '[]'),
-      cache: new Map(), // id -> anime
-      isLoading: false,
-      queue: JSON.parse(localStorage.getItem('atracker_sync_queue') || '[]'), // pending mutations
-      lastSync: Number(localStorage.getItem('atracker_last_sync') || '0'),
+      lists: [],
+      anime: [], // array of { anilistId, idMal, title, coverImage, status, score, description, format, episodes, dateAdded }
+      active: '',
+      cache: new Map(), // in-memory only per session to speed UI, not persisted
+      loading: true,
     };
-    if (!state.lists.length) state.lists = [...DEFAULT_LISTS];
-    if (!state.active) state.active = state.lists[0];
-    state.anime.forEach(a=>state.cache.set(String(a.anilistId), a));
 
-    const DOM = {
-      grid: document.getElementById('grid'),
-      empty: document.getElementById('emptyState'),
+    // ========= DOM =========
+    const els = {
       tabs: document.getElementById('tabs'),
-      modals: document.getElementById('modals'),
-      search: document.getElementById('searchInput'),
+      grid: document.getElementById('grid'),
+      state: document.getElementById('state'),
+      searchInput: document.getElementById('searchInput'),
+      searchBtn: document.getElementById('searchBtn'),
       searchResults: document.getElementById('searchResults'),
-      clearSearch: document.getElementById('clearSearch'),
-      sort: document.getElementById('sortSelect'),
-      settingsBtn: document.getElementById('settingsBtn'),
-      manageListsBtn: document.getElementById('manageListsBtn'),
-      exportBtn: document.getElementById('exportBtn'),
-      importFile: document.getElementById('importFile'),
+      manageBtn: document.getElementById('manageBtn'),
+      modalRoot: document.getElementById('modal-root'),
       toast: document.getElementById('toast'),
     };
 
-    function save() {
-      localStorage.setItem('atracker_lists', JSON.stringify(state.lists));
-      localStorage.setItem('atracker_active', state.active);
-      localStorage.setItem('atracker_anime', JSON.stringify(state.anime));
-      localStorage.setItem('atracker_sync_queue', JSON.stringify(state.queue));
-      localStorage.setItem('atracker_last_sync', String(state.lastSync));
+    // ========= Utilities =========
+    const qs = o => Object.entries(o).map(([k,v]) => `${encodeURIComponent(k)}=${encodeURIComponent(typeof v==='string'?v:JSON.stringify(v))}`).join('&');
+    const toast = (msg, ok=true) => {
+      els.toast.textContent = msg; els.toast.classList.remove('hidden'); els.toast.style.background = ok? '#059669' : '#dc2626';
+      setTimeout(()=> els.toast.classList.add('hidden'), 2500);
+    };
+
+    function cardSkeleton(n=12){
+      return Array.from({length:n}).map(()=>`
+        <div class="card overflow-hidden">
+          <div class="aspect-[2/3] skeleton"></div>
+          <div class="p-3 space-y-2">
+            <div class="h-4 w-3/4 skeleton rounded"></div>
+            <div class="h-3 w-1/2 skeleton rounded"></div>
+          </div>
+        </div>`).join('');
     }
 
-    // =======================
-    // API LAYER (robust + retries)
-    // =======================
-    async function retry(fn, label, tries = 3) {
-      let lastErr;
-      for (let i = 0; i < tries; i++) {
-        try { return await fn(); } catch (e) { lastErr = e; await new Promise(r=>setTimeout(r, 250 * (i+1)*(i+1))); }
-      }
-      console.error(label, lastErr); throw lastErr;
+    // ========= Backend I/O (GET tunnel for all mutations to avoid preflight) =========
+    async function apiSnapshot(){
+      const res = await fetch(GOOGLE_SHEET_URL, { method:'GET', mode:'cors' });
+      if (!res.ok) throw new Error('Snapshot failed');
+      return res.json();
+    }
+    async function apiAddOrUpdate(anime){
+      const url = `${GOOGLE_SHEET_URL}?${qs({ action:'addOrUpdateAnime', data: anime })}`;
+      const res = await fetch(url, { method:'GET', mode:'cors', cache:'no-store' });
+      if (!res.ok) throw new Error('Update failed');
+      return res.json();
+    }
+    async function apiDelete(anilistId){
+      const url = `${GOOGLE_SHEET_URL}?${qs({ action:'deleteAnime', anilistId })}`;
+      const res = await fetch(url, { method:'GET', mode:'cors', cache:'no-store' });
+      if (!res.ok) throw new Error('Delete failed');
+      return res.json();
+    }
+    async function apiManageLists(lists){
+      const url = `${GOOGLE_SHEET_URL}?${qs({ action:'manageLists', lists })}`;
+      const res = await fetch(url, { method:'GET', mode:'cors', cache:'no-store' });
+      if (!res.ok) throw new Error('Lists update failed');
+      return res.json();
     }
 
-    async function anilistSearch(q) {
-      const query = `query($search:String,$page:Int,$perPage:Int){ Page(page:$page,perPage:$perPage){ media(search:$search,type:ANIME,sort:SEARCH_MATCH){ id idMal title{romaji english native} coverImage{extraLarge color} description(asHtml:false) averageScore format seasonYear episodes } } }`;
-      return retry(async ()=>{
-        const r = await fetch(CFG.ANILIST, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }, body: JSON.stringify({ query, variables: { search: q, page:1, perPage: 12 } }) });
-        if (!r.ok) throw new Error('AniList error');
-        const j = await r.json();
-        return j.data.Page.media;
-      }, 'anilistSearch');
+    // ========= AniList search =========
+    async function searchAniList(term){
+      const query = `query ($search: String, $page: Int, $perPage: Int) { Page (page: 1, perPage: 10) { media (search: $search, type: ANIME, sort: SEARCH_MATCH) { id idMal title { romaji english native } coverImage { extraLarge color } description(asHtml:false) averageScore format episodes seasonYear } } }`;
+      const res = await fetch(ANILIST_API_URL, { method:'POST', headers:{ 'Content-Type':'application/json', 'Accept':'application/json' }, body: JSON.stringify({ query, variables:{ search: term }}) });
+      if (!res.ok) throw new Error('AniList search failed');
+      const data = await res.json();
+      return data?.data?.Page?.media || [];
     }
 
-    async function getExternalScores({ idMal, title }) {
-      const scores = { anilist: null, mal: null, kitsu: null };
-      if (idMal) {
-        try {
-          const r = await retry(async ()=>{
-            const res = await fetch(`${CFG.JIKAN}/anime/${idMal}`);
-            if (!res.ok) throw new Error('Jikan error');
-            return res.json();
-          }, 'jikanAnime');
-          scores.mal = r.data?.score ?? null;
-        } catch (e) { scores.mal = null; }
-      }
-      try {
-        const r = await retry(async ()=>{
-          const res = await fetch(`${CFG.KITSU}/anime?filter[text]=${encodeURIComponent(title)}&page[limit]=1`, {
-            headers: { 'Accept': 'application/vnd.api+json' },
-          });
-          if (!res.ok) throw new Error('Kitsu error');
-          return res.json();
-        }, 'kitsuSearch');
-        const item = r.data?.[0]?.attributes;
-        if (item?.averageRating) {
-          const v = parseFloat(String(item.averageRating)); // 0-100 string
-          scores.kitsu = isFinite(v) ? (v/10) : null; // normalize to 0-10
-        }
-      } catch (e) { scores.kitsu = null; }
-      return scores;
-    }
-
-    // Google Apps Script sync — resilient
-    // Expected GAS doGet: returns { lists: string[], anime: Anime[] }
-    // Expected GAS doPost: accepts JSON { action, data? | lists? | anilistId? }
-    async function pullFromSheet() {
-      if (!CFG.GAS_URL) return; // not configured yet
-      const r = await retry(async ()=>{
-        const res = await fetch(CFG.GAS_URL, { method: 'GET' });
-        if (!res.ok) throw new Error('GAS pull failed');
-        return res.json();
-      }, 'pullFromSheet');
-      if (Array.isArray(r.lists)) state.lists = r.lists;
-      if (Array.isArray(r.anime)) state.anime = r.anime;
-      state.active = state.lists.includes(state.active) ? state.active : (state.lists[0]||state.active);
-      state.cache.clear();
-      state.anime.forEach(a=>state.cache.set(String(a.anilistId), a));
-      state.lastSync = Date.now();
-      save();
-    }
-
-    async function pushToSheet(payload) {
-      if (!CFG.GAS_URL) return; // queue until configured
-      // Attempt POST CORS first
-      try {
-        const res = await fetch(CFG.GAS_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-          mode: 'cors',
-        });
-        if (!res.ok) throw new Error('GAS POST failed');
-        await res.text().catch(()=>{});
-        return true;
-      } catch (e) {
-        // Fallback 1: sendBeacon (fire-and-forget)
-        try {
-          const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
-          navigator.sendBeacon(CFG.GAS_URL, blob);
-          return true;
-        } catch {}
-        // Fallback 2: GET tunnel (works if doGet handles query)
-        try {
-          const qp = new URLSearchParams({ action: payload.action, data: JSON.stringify(payload.data||{}), lists: JSON.stringify(payload.lists||[]) });
-          await fetch(`${CFG.GAS_URL}?${qp.toString()}`);
-          return true;
-        } catch {}
-        return false;
-      }
-    }
-
-    async function processQueue() {
-      if (!state.queue.length) return;
-      const pending = [...state.queue];
-      state.queue = []; save();
-      for (const item of pending) {
-        const ok = await pushToSheet(item);
-        if (!ok) state.queue.push(item); // requeue if still failing
-      }
-      save();
-    }
-
-    // =======================
-    // RENDER
-    // =======================
-    function renderTabs() {
-      DOM.tabs.innerHTML = '';
-      state.lists.forEach((list)=>{
+    // ========= Renderers =========
+    function renderTabs(){
+      els.tabs.innerHTML = '';
+      const frag = document.createDocumentFragment();
+      state.lists.forEach(list => {
         const btn = document.createElement('button');
-        btn.className = `px-3 py-1.5 rounded-xl text-sm border ${state.active===list ? 'bg-brand text-slate-900 border-transparent' : 'bg-slate-800/80 border-slate-700 hover:bg-slate-700/70'} focus-ring`;
+        btn.type = 'button';
+        btn.className = `btn ${state.active===list ? 'bg-slate-700' : 'btn-ghost'} shrink-0`;
         btn.textContent = list;
-        btn.onclick = ()=>{ state.active = list; localStorage.setItem('atracker_active', state.active); renderGrid(); };
-        DOM.tabs.appendChild(btn);
+        btn.addEventListener('click', () => { state.active = list; renderGrid(); renderTabs(); });
+        frag.appendChild(btn);
+      });
+      els.tabs.appendChild(frag);
+    }
+
+    function renderGrid(){
+      const items = state.anime.filter(a => a.status === state.active);
+      if (!state.active) { els.state.innerHTML = '<p class="text-slate-400">Create a list to get started.</p>'; els.grid.innerHTML=''; return; }
+      if (state.loading) { els.state.innerHTML=''; els.grid.innerHTML = cardSkeleton(); return; }
+      if (items.length === 0) { els.state.innerHTML = `<p class="text-slate-400">No items in <span class="text-sky-400 font-semibold">${state.active}</span>. Search and add some!</p>`; els.grid.innerHTML=''; return; }
+      els.state.innerHTML='';
+      els.grid.innerHTML = items.map(cardHTML).join('');
+      // Bind click handlers after inject
+      items.forEach(it => {
+        const btn = document.getElementById(`open-${it.anilistId}`);
+        if (btn) btn.addEventListener('click', () => openModal(it.anilistId));
       });
     }
 
-    function sortItems(items) {
-      const s = DOM.sort.value;
-      return items.sort((a,b)=>{
-        const ga = a.score ?? -1, gb = b.score ?? -1;
-        if (s==='date_desc') return new Date(b.dateAdded||0)-new Date(a.dateAdded||0);
-        if (s==='date_asc') return new Date(a.dateAdded||0)-new Date(b.dateAdded||0);
-        if (s==='title_asc') return (a.title||'').localeCompare(b.title||'');
-        if (s==='title_desc') return (b.title||'').localeCompare(a.title||'');
-        if (s==='score_desc') return gb-ga;
-        if (s==='score_asc') return ga-gb;
-        return 0;
-      });
-    }
-
-    function cardHTML(anime, i) {
-      const score = (anime.score!=null) ? (anime.score/10).toFixed(1) : '–';
-      const ep = anime.episodes ? `<span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-800/80 border border-slate-700 ml-1">${anime.episodes} eps</span>` : '';
+    function cardHTML(a){
+      const title = a.title;
+      const score = a.score ? (a.score/10).toFixed(1) : '—';
       return `
-      <article class="group rounded-2xl overflow-hidden bg-slate-900/60 border border-slate-800 hover:border-slate-700 shadow-glass transition-transform hover:-translate-y-1 animate-in" style="animation-delay:${i*30}ms" data-id="${anime.anilistId}">
+      <div class="card overflow-hidden group">
         <div class="relative">
-          <img src="${anime.coverImage}" alt="${anime.title}" class="w-full aspect-[2/3] object-cover" loading="lazy"/>
-          <div class="absolute top-2 right-2 rounded-full bg-black/70 backdrop-blur px-2 py-1 text-xs font-semibold">⭐ ${score}</div>
+          <img src="${a.coverImage}" alt="${title}" class="w-full h-full aspect-[2/3] object-cover" loading="lazy" />
+          <div class="absolute top-2 right-2 rounded-full bg-black/70 px-2.5 py-1 text-xs font-bold">⭐ ${score}</div>
         </div>
-        <div class="p-2.5">
-          <h3 class="text-sm font-semibold truncate group-hover:text-brand">${anime.title}</h3>
-          <div class="mt-1 text-xs text-slate-400 flex items-center">${anime.format||''}${ep}</div>
-        </div>
-      </article>`;
-    }
-
-    function renderGrid() {
-      const items = sortItems(state.anime.filter(a=>a.status===state.active));
-      if (!items.length) {
-        DOM.grid.innerHTML = '';
-        DOM.empty.classList.remove('hidden');
-        return;
-      }
-      DOM.empty.classList.add('hidden');
-      DOM.grid.innerHTML = items.map((a,i)=>cardHTML(a,i)).join('');
-      // Click -> modal
-      DOM.grid.querySelectorAll('article').forEach(card=>{
-        card.addEventListener('click', ()=>openModal(card.dataset.id));
-      });
-    }
-
-    function showToast(msg, variant='ok') {
-      DOM.toast.className = 'fixed bottom-5 right-5 z-[100]';
-      const bg = variant==='err' ? 'bg-red-600' : variant==='warn' ? 'bg-amber-600' : 'bg-emerald-600';
-      DOM.toast.innerHTML = `<div class="${bg} text-white px-4 py-2 rounded-xl shadow-lg">${msg}</div>`;
-      DOM.toast.classList.remove('hidden');
-      setTimeout(()=>DOM.toast.classList.add('hidden'), 2400);
-    }
-
-    // =======================
-    // SEARCH UI
-    // =======================
-    let searchTimer;
-    DOM.search.addEventListener('input', (e)=>{
-      const q = e.target.value.trim();
-      DOM.clearSearch.classList.toggle('hidden', !q.length);
-      if (q.length < 3) { DOM.searchResults.classList.add('hidden'); DOM.searchResults.innerHTML=''; return; }
-      clearTimeout(searchTimer);
-      searchTimer = setTimeout(async ()=>{
-        try {
-          const results = await anilistSearch(q);
-          DOM.searchResults.innerHTML = results.map(r=>{
-            const t = r.title.english || r.title.romaji || r.title.native;
-            return `<button class="w-full text-left flex items-center gap-3 p-2 hover:bg-slate-800/60" data-id="${r.id}">
-              <img src="${r.coverImage.extraLarge}" class="w-10 h-14 object-cover rounded" alt="${t}"/>
-              <div class="min-w-0">
-                <div class="font-medium truncate">${t}</div>
-                <div class="text-xs text-slate-400 truncate">${r.format||''} • ${r.seasonYear||'N/A'}</div>
-              </div>
-            </button>`;
-          }).join('');
-          DOM.searchResults.classList.remove('hidden');
-          // Click handler
-          DOM.searchResults.querySelectorAll('button').forEach(btn=>{
-            btn.addEventListener('click', ()=> addAnimeFromCache(results.find(r=>String(r.id)===String(btn.dataset.id))));
-          });
-        } catch(e) {
-          DOM.searchResults.classList.add('hidden');
-        }
-      }, 280);
-    });
-    DOM.clearSearch.addEventListener('click', ()=>{ DOM.search.value=''; DOM.searchResults.classList.add('hidden'); DOM.clearSearch.classList.add('hidden'); });
-    document.addEventListener('click', (e)=>{ if (!e.target.closest('#searchResults') && !e.target.closest('#searchInput')) DOM.searchResults.classList.add('hidden'); });
-
-    // =======================
-    // MODALS (details + list manager + settings)
-    // =======================
-    function modalShell(inner) {
-      return `<div class="fixed inset-0 z-50">
-        <div class="absolute inset-0 bg-black/70" data-close></div>
-        <div class="absolute inset-0 grid place-items-center p-4">
-          <div class="w-full max-w-3xl bg-surface border border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-in">${inner}</div>
+        <div class="p-3 flex items-center justify-between gap-2">
+          <div class="truncate font-semibold text-sm group-hover:text-sky-400">${title}</div>
+          <button id="open-${a.anilistId}" class="btn btn-ghost" title="Open">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          </button>
         </div>
       </div>`;
     }
 
-    async function openModal(id) {
-      const a = state.cache.get(String(id));
+    function openModal(id){
+      const a = state.anime.find(x => x.anilistId == id);
       if (!a) return;
-      const dateAdded = a.dateAdded ? new Date(a.dateAdded).toLocaleDateString(undefined, { year:'numeric', month:'long', day:'numeric' }) : '—';
-      const desc = (a.description||'').replace(/<br\s*\/?>(\n)?/gi,' ').replace(/&quot;/g,'"');
-
-      // Fetch external scores lazily
-      let externalHTML = `<div class="h-6 skeleton rounded w-16"></div><div class="h-6 skeleton rounded w-16"></div>`;
-      const html = modalShell(`
-        <div class="grid md:grid-cols-[1fr,1.3fr] gap-6 p-4 sm:p-6">
-          <img src="${a.coverImage}" class="rounded-xl w-full aspect-[2/3] object-cover border border-slate-800" alt="${a.title}"/>
-          <div class="min-w-0 relative">
-            <button class="absolute top-0 right-0 p-1.5 rounded hover:bg-slate-800" data-close aria-label="Close">
-              <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-            </button>
-            <h2 class="text-2xl font-bold pr-8">${a.title}</h2>
-            <p class="text-xs text-slate-400 mt-1">Added on ${dateAdded}</p>
-            <div class="flex items-center gap-2 mt-3 flex-wrap" id="scores">
-              <div class="px-2 py-1 rounded bg-slate-800/70 border border-slate-700 text-sm">AniList: <b>${a.score!=null ? (a.score/10).toFixed(1) : '—'}</b></div>
-              <div class="px-2 py-1 rounded bg-slate-800/70 border border-slate-700 text-sm">MAL: <b id="malScore">—</b></div>
-              <div class="px-2 py-1 rounded bg-slate-800/70 border border-slate-700 text-sm">Kitsu: <b id="kitsuScore">—</b></div>
-            </div>
-            <p class="mt-4 text-sm text-slate-300 leading-relaxed max-h-40 overflow-auto scrollbar">${desc || 'No description available.'}</p>
-            <div class="mt-6 flex flex-wrap gap-2">
-              ${state.lists.map(l=>`<button data-movel="${l}" class="px-3 py-1.5 rounded-xl border ${a.status===l?'bg-brand text-slate-900 border-transparent':'bg-slate-800/80 border-slate-700 hover:bg-slate-700/70'} text-sm">${l}</button>`).join('')}
-              <button data-delete class="ml-auto text-red-400 hover:text-red-300 text-sm">Delete</button>
+      const lists = state.lists.map(l => `<button data-l="${l}" class="btn ${a.status===l?'bg-sky-600 text-white':'btn-ghost'}">${l}</button>`).join('');
+      els.modalRoot.innerHTML = `
+      <div class="fixed inset-0 z-50 grid place-items-center p-4">
+        <div class="absolute inset-0 bg-black/70" data-close></div>
+        <div class="card relative max-w-3xl w-full overflow-hidden">
+          <button class="absolute right-3 top-3 btn btn-ghost" data-close aria-label="Close">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <img src="${a.coverImage}" alt="${a.title}" class="w-full aspect-[2/3] object-cover md:rounded-l-2xl" />
+            <div class="md:col-span-2 p-4 space-y-3">
+              <h2 class="text-2xl font-extrabold">${a.title}</h2>
+              <div class="text-xs text-slate-400">Added: ${new Date(a.dateAdded||Date.now()).toLocaleString()}</div>
+              <p class="text-sm text-slate-300 max-h-40 overflow-auto scrollbar">${(a.description||'No description').slice(0,600)}${a.description && a.description.length>600?'…':''}</p>
+              <div class="flex flex-wrap gap-2">${lists}</div>
+              <div class="pt-2 flex justify-between">
+                <div class="text-sm text-slate-400">Format: ${a.format||'—'} · Episodes: ${a.episodes??'—'}</div>
+                <button id="del-${a.anilistId}" class="btn btn-ghost text-red-400 hover:text-red-200">Delete</button>
+              </div>
             </div>
           </div>
-        </div>`);
-      DOM.modals.innerHTML = html;
-      const root = DOM.modals.firstElementChild;
-      root.querySelectorAll('[data-close]').forEach(el=> el.addEventListener('click', closeModal));
-      root.querySelectorAll('[data-movel]').forEach(btn=> btn.addEventListener('click', ()=> changeStatus(a.anilistId, btn.dataset.movel)));
-      root.querySelector('[button]');
-      root.querySelector('[data-delete]').addEventListener('click', ()=> delAnime(a.anilistId));
-
-      // External scores
-      try {
-        const s = await getExternalScores({ idMal: a.idMal, title: a.title });
-        const malEl = root.querySelector('#malScore');
-        const kitsuEl = root.querySelector('#kitsuScore');
-        if (malEl) malEl.textContent = s.mal!=null ? s.mal.toFixed ? s.mal.toFixed(1) : s.mal : '—';
-        if (kitsuEl) kitsuEl.textContent = s.kitsu!=null ? (typeof s.kitsu==='number'? s.kitsu.toFixed(1) : s.kitsu) : '—';
-      } catch {}
-    }
-    function closeModal(){ DOM.modals.innerHTML = ''; }
-
-    function openListsManager() {
-      const html = modalShell(`
-        <div class="p-5">
-          <h3 class="text-xl font-bold mb-3">Manage Lists</h3>
-          <div id="listEditor" class="space-y-2 max-h-72 overflow-auto pr-1">
-            ${state.lists.map(l=>`<div class="flex items-center gap-2"><input class="flex-1 bg-slate-800/70 border border-slate-700 rounded-xl px-3 py-2" value="${l}"/><button class="px-2 py-2 text-red-400 hover:text-red-300" data-remove>Remove</button></div>`).join('')}
-          </div>
-          <div class="mt-3 flex gap-2"><input id="newListName" class="flex-1 bg-slate-800/70 border border-slate-700 rounded-xl px-3 py-2" placeholder="New list name"/><button id="addList" class="px-3 py-2 rounded-xl bg-brand text-slate-900">Add</button></div>
-          <div class="mt-5 flex gap-2 justify-end"><button data-close class="px-3 py-2 rounded-xl bg-slate-700">Cancel</button><button id="saveLists" class="px-3 py-2 rounded-xl bg-emerald-600">Save</button></div>
-        </div>`);
-      DOM.modals.innerHTML = html;
-      const root = DOM.modals.firstElementChild;
-      root.querySelector('[data-close]').addEventListener('click', closeModal);
-      root.querySelectorAll('[data-remove]').forEach((btn)=> btn.addEventListener('click', (e)=> e.currentTarget.parentElement.remove()));
-      root.querySelector('#addList').addEventListener('click', ()=>{
-        const wrap = root.querySelector('#listEditor');
-        const div = document.createElement('div');
-        div.className = 'flex items-center gap-2';
-        div.innerHTML = `<input class="flex-1 bg-slate-800/70 border border-slate-700 rounded-xl px-3 py-2" placeholder="List name"/><button class="px-2 py-2 text-red-400 hover:text-red-300" data-remove>Remove</button>`;
-        wrap.appendChild(div);
-        div.querySelector('[data-remove]').addEventListener('click', (e)=> e.currentTarget.parentElement.remove());
-      });
-      root.querySelector('#saveLists').addEventListener('click', ()=>{
-        const names = [...root.querySelectorAll('#listEditor input')].map(i=>i.value.trim()).filter(Boolean);
-        if (!names.length) return showToast('Need at least one list','warn');
-        const prevActive = state.active;
-        state.lists = names;
-        if (!names.includes(prevActive)) state.active = names[0];
-        save();
-        state.queue.push({ action:'manageLists', lists: names }); save(); processQueue();
-        renderTabs(); renderGrid(); closeModal(); showToast('Lists updated');
-      });
-    }
-
-    function openSettings() {
-      const html = modalShell(`
-        <div class="p-5">
-          <h3 class="text-xl font-bold">Settings</h3>
-          <p class="mt-2 text-sm text-slate-400">Paste your Google Apps Script Web App URL. Changes are saved locally.</p>
-          <input id="gasUrl" class="mt-3 w-full bg-slate-800/70 border border-slate-700 rounded-xl px-3 py-2" placeholder="https://script.google.com/macros/s/…/exec" value="${CFG.GAS_URL}"/>
-          <div class="mt-4 flex gap-2 justify-end"><button data-close class="px-3 py-2 rounded-xl bg-slate-700">Close</button><button id="saveCfg" class="px-3 py-2 rounded-xl bg-brand text-slate-900">Save</button></div>
-          <div class="mt-4 text-xs text-slate-500">Tip: If syncing fails due to CORS, deploy your Web App as <b>Anyone</b> and make sure your <code>doPost</code> returns <code>Content-Type: application/json</code> and enables CORS.</div>
-        </div>`);
-      DOM.modals.innerHTML = html;
-      const root = DOM.modals.firstElementChild;
-      root.querySelector('[data-close]').addEventListener('click', closeModal);
-      root.querySelector('#saveCfg').addEventListener('click', ()=>{
-        const url = root.querySelector('#gasUrl').value.trim();
-        CFG.GAS_URL = url; localStorage.setItem('atracker_gas_url', url);
-        closeModal(); processQueue(); showToast('Settings saved');
-      });
-    }
-
-    // =======================
-    // MUTATIONS
-    // =======================
-    function normalizeFromAniList(x) {
-      return {
-        anilistId: x.id,
-        idMal: x.idMal || null,
-        title: x.title?.english || x.title?.romaji || x.title?.native || 'Untitled',
-        coverImage: x.coverImage?.extraLarge || x.coverImage?.large || x.coverImage?.medium,
-        status: state.active,
-        score: x.averageScore ?? null,
-        description: x.description || '',
-        format: x.format || '',
-        episodes: x.episodes || null,
-        dateAdded: new Date().toISOString(),
-      };
-    }
-
-    function upsertAnime(anime) {
-      const i = state.anime.findIndex(a=> String(a.anilistId)===String(anime.anilistId));
-      if (i>=0) state.anime[i] = { ...state.anime[i], ...anime };
-      else state.anime.push(anime);
-      state.cache.set(String(anime.anilistId), anime);
-      save();
-    }
-
-    function addAnimeFromCache(apiData) {
-      if (!apiData) return;
-      const anime = normalizeFromAniList(apiData);
-      upsertAnime(anime);
-      state.queue.push({ action:'addOrUpdateAnime', data: anime }); save(); processQueue();
-      renderGrid(); DOM.searchResults.classList.add('hidden'); DOM.search.value=''; DOM.clearSearch.classList.add('hidden');
-      showToast(`${anime.title} added to ${anime.status}`);
-    }
-
-    function changeStatus(id, newList) {
-      const idx = state.anime.findIndex(a=> String(a.anilistId)===String(id));
-      if (idx<0) return;
-      state.anime[idx].status = newList;
-      save();
-      state.queue.push({ action:'addOrUpdateAnime', data: state.anime[idx] }); save(); processQueue();
-      renderTabs(); renderGrid();
-      showToast(`${state.anime[idx].title} → ${newList}`);
-      closeModal();
-    }
-
-    function delAnime(id) {
-      const a = state.anime.find(x=> String(x.anilistId)===String(id));
-      state.anime = state.anime.filter(x=> String(x.anilistId)!==String(id));
-      save();
-      state.queue.push({ action:'deleteAnime', anilistId: id }); save(); processQueue();
-      renderGrid(); closeModal(); showToast(`${a?.title||'Anime'} deleted`, 'warn');
-    }
-
-    // =======================
-    // IMPORT/EXPORT
-    // =======================
-    DOM.exportBtn.addEventListener('click', ()=>{
-      const blob = new Blob([JSON.stringify({ lists: state.lists, anime: state.anime }, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url; a.download = 'anime-tracker.json'; a.click();
-      URL.revokeObjectURL(url);
-    });
-    DOM.importFile.addEventListener('change', (e)=>{
-      const f = e.target.files?.[0]; if (!f) return;
-      const reader = new FileReader();
-      reader.onload = ()=>{
-        try {
-          const j = JSON.parse(String(reader.result||'{}'));
-          if (Array.isArray(j.lists)) state.lists = j.lists;
-          if (Array.isArray(j.anime)) state.anime = j.anime;
-          state.cache.clear(); state.anime.forEach(a=>state.cache.set(String(a.anilistId), a));
-          save(); renderTabs(); renderGrid(); showToast('Import complete');
-        } catch { showToast('Invalid JSON','err'); }
-      };
-      reader.readAsText(f);
-      e.target.value = '';
-    });
-
-    // =======================
-    // INIT
-    // =======================
-    function renderSkeleton() {
-      DOM.grid.innerHTML = Array.from({length:12}).map(()=>`<div class="rounded-2xl overflow-hidden border border-slate-800 bg-slate-900/60">
-        <div class="aspect-[2/3] skeleton"></div>
-        <div class="p-2.5">
-          <div class="h-3 rounded skeleton w-3/4"></div>
-          <div class="h-3 rounded skeleton w-1/2 mt-2"></div>
         </div>
-      </div>`).join('');
-      DOM.empty.classList.add('hidden');
+      </div>`;
+      // Close handlers
+      els.modalRoot.querySelectorAll('[data-close]').forEach(b=> b.addEventListener('click', ()=> els.modalRoot.innerHTML=''));
+      // Status change
+      els.modalRoot.querySelectorAll('button[data-l]').forEach(b => b.addEventListener('click', async () => {
+        const newStatus = b.getAttribute('data-l');
+        const updated = { ...a, status: newStatus };
+        try { await apiAddOrUpdate(updated); toast(`Moved to ${newStatus}`); } catch(e){ toast('Update failed', false); return; }
+        const idx = state.anime.findIndex(x=>x.anilistId==a.anilistId); state.anime[idx] = updated; renderGrid(); openModal(a.anilistId);
+      }));
+      // Delete
+      const del = document.getElementById(`del-${a.anilistId}`);
+      del.addEventListener('click', async () => {
+        if (!confirm('Delete this anime?')) return;
+        try { await apiDelete(a.anilistId); toast('Deleted'); } catch(e){ toast('Delete failed', false); return; }
+        state.anime = state.anime.filter(x=>x.anilistId!=a.anilistId); els.modalRoot.innerHTML=''; renderGrid();
+      });
     }
 
-    async function init() {
-      renderTabs();
-      renderSkeleton();
-      renderGrid();
-      // Pull latest from sheet if cache is stale
-      const stale = Date.now() - state.lastSync > CFG.CACHE_TTL;
-      if (stale) {
-        try { await pullFromSheet(); renderTabs(); renderGrid(); } catch (e) { console.warn('GAS pull failed'); }
+    function renderSearch(results){
+      if (!results || !results.length){ els.searchResults.innerHTML = '<div class="p-3 text-sm text-slate-400">No results</div>'; els.searchResults.classList.remove('hidden'); return; }
+      els.searchResults.innerHTML = results.map(r => {
+        const t = r.title.english || r.title.romaji || r.title.native;
+        const img = r.coverImage.extraLarge;
+        return `<div class="flex items-center gap-3 p-2 rounded-xl hover:bg-slate-700/60 clickable" data-id="${r.id}">
+          <img src="${img}" class="w-10 h-14 object-cover rounded" alt="${t}"/>
+          <div class="min-w-0"><div class="truncate font-semibold">${t}</div><div class="text-xs text-slate-400">${r.format||''} ${r.seasonYear?('· '+r.seasonYear):''}</div></div>
+        </div>`;
+      }).join('');
+      els.searchResults.classList.remove('hidden');
+      // Bind
+      els.searchResults.querySelectorAll('[data-id]').forEach(item => item.addEventListener('click', async () => {
+        const id = item.getAttribute('data-id');
+        const r = results.find(x=>x.id==id);
+        if (!r) return;
+        const anime = {
+          anilistId: r.id,
+          idMal: r.idMal ?? '',
+          title: r.title.english || r.title.romaji || r.title.native,
+          coverImage: r.coverImage.extraLarge,
+          status: state.active || state.lists[0] || 'Watching',
+          score: r.averageScore ?? '',
+          description: r.description ?? '',
+          format: r.format ?? '',
+          episodes: r.episodes ?? '',
+          dateAdded: new Date().toISOString(),
+        };
+        try { await apiAddOrUpdate(anime); toast(`Added to ${anime.status}`); } catch(e){ toast('Add failed', false); return; }
+        const idx = state.anime.findIndex(x=>x.anilistId==anime.anilistId);
+        if (idx>=0) state.anime[idx] = { ...state.anime[idx], ...anime }; else state.anime.push(anime);
+        els.searchResults.classList.add('hidden'); els.searchInput.value=''; renderGrid();
+      }));
+    }
+
+    // ========= Manage Lists Modal =========
+    function openManage(){
+      const listItems = state.lists.map(l => `<div class="flex items-center gap-2"><input value="${l}" class="flex-1 px-3 py-2 rounded-lg bg-slate-800 border border-slate-700"/><button class="btn btn-ghost text-red-400" data-del>Remove</button></div>`).join('');
+      els.modalRoot.innerHTML = `
+      <div class="fixed inset-0 z-50 grid place-items-center p-4">
+        <div class="absolute inset-0 bg-black/70" data-close></div>
+        <div class="card max-w-lg w-full p-4">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-lg font-bold">Manage Lists</h3>
+            <button class="btn btn-ghost" data-close aria-label="Close">✕</button>
+          </div>
+          <div id="editor" class="space-y-2 max-h-72 overflow-auto scrollbar">${listItems}</div>
+          <div class="flex items-center gap-2 pt-4">
+            <button id="addList" class="btn btn-ghost">Add</button>
+            <div class="flex-1"></div>
+            <button id="saveLists" class="btn btn-pri">Save</button>
+          </div>
+        </div>
+      </div>`;
+      els.modalRoot.querySelectorAll('[data-close]').forEach(b=> b.addEventListener('click', ()=> els.modalRoot.innerHTML=''));
+      const editor = document.getElementById('editor');
+      document.getElementById('addList').addEventListener('click', ()=>{
+        const wrap = document.createElement('div');
+        wrap.className = 'flex items-center gap-2';
+        wrap.innerHTML = `<input placeholder="New list" class="flex-1 px-3 py-2 rounded-lg bg-slate-800 border border-slate-700"/><button class="btn btn-ghost text-red-400" data-del>Remove</button>`;
+        editor.appendChild(wrap);
+      });
+      editor.addEventListener('click', e=>{
+        const btn = e.target.closest('[data-del]');
+        if (btn) btn.parentElement.remove();
+      });
+      document.getElementById('saveLists').addEventListener('click', async ()=>{
+        const names = Array.from(editor.querySelectorAll('input')).map(i=>i.value.trim()).filter(Boolean);
+        if (!names.length){ toast('At least one list is required', false); return; }
+        try { await apiManageLists(names); toast('Lists saved'); } catch(e){ toast('Save failed', false); return; }
+        state.lists = names;
+        if (!state.lists.includes(state.active)) state.active = state.lists[0];
+        els.modalRoot.innerHTML=''; renderTabs(); renderGrid();
+      });
+    }
+
+    // ========= Init =========
+    async function init(){
+      // Wire buttons (ensure clickable and on top)
+      els.manageBtn.addEventListener('click', openManage);
+      els.searchBtn.addEventListener('click', async ()=>{
+        const val = els.searchInput.value.trim(); if (val.length<3){ renderSearch([]); return; }
+        try { const results = await searchAniList(val); renderSearch(results); } catch(e){ renderSearch([]); }
+      });
+      els.searchInput.addEventListener('keydown', async (e)=>{
+        if (e.key==='Enter') { els.searchBtn.click(); }
+      });
+      document.addEventListener('click', (e)=>{
+        if (!e.target.closest('#searchResults') && !e.target.closest('#searchInput') && !e.target.closest('#searchBtn')) {
+          els.searchResults.classList.add('hidden');
+        }
+      });
+
+      // Initial snapshot
+      els.grid.innerHTML = cardSkeleton();
+      try {
+        const snap = await apiSnapshot();
+        state.lists = Array.isArray(snap.lists) && snap.lists.length ? snap.lists : ['Watching','Completed','On Hold'];
+        state.anime = Array.isArray(snap.anime) ? snap.anime : [];
+        state.active = state.lists[0] || '';
+        state.loading = false;
+      } catch (e){
+        state.loading = false; toast('Failed to load database', false);
+        // Still provide defaults so UI is usable
+        if (!state.lists.length) state.lists = ['Watching','Completed'];
+        state.active = state.lists[0];
       }
-      // Process pending mutations (if any)
-      processQueue();
+      renderTabs();
+      renderGrid();
     }
-
-    // Events
-    DOM.settingsBtn.addEventListener('click', openSettings);
-    DOM.manageListsBtn.addEventListener('click', openListsManager);
-    DOM.sort.addEventListener('change', renderGrid);
 
     init();
-
-    // Service worker (optional, silent)
-    if ('serviceWorker' in navigator) {
-      const sw = `self.addEventListener('install', e=> self.skipWaiting());self.addEventListener('activate', e=> clients.claim());self.addEventListener('fetch', ()=>{});`;
-      const blob = new Blob([sw], { type: 'text/javascript' });
-      const url = URL.createObjectURL(blob);
-      navigator.serviceWorker.register(url).catch(()=>{});
-    }
   </script>
 </body>
 </html>
