@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Anime List</title>
+    <title>AniShelf</title>
     <style>
         /* CSS RESET & FONT */
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
@@ -30,22 +30,10 @@
         }
 
         /* Custom Scrollbar Styles */
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: var(--surface-color);
-            border-radius: 10px;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: var(--primary-color);
-            border-radius: 10px;
-            border: 2px solid var(--surface-color);
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: var(--accent-color);
-        }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: var(--surface-color); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: var(--primary-color); border-radius: 10px; border: 2px solid var(--surface-color); }
+        ::-webkit-scrollbar-thumb:hover { background: var(--accent-color); }
 
         /* HEADER & NAVIGATION */
         header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 2rem; background-color: rgba(30, 30, 30, 0.8); backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 1000; border-bottom: 1px solid var(--border-color); }
@@ -106,21 +94,21 @@
         .modal-body { margin-bottom: 1.5rem; }
         .modal-body select, .modal-body input { width: 100%; padding: 0.8rem; font-size: 1rem; background-color: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-color); border-radius: 8px; }
         .modal-buttons { display: flex; justify-content: flex-end; gap: 1rem; align-items: center; }
-        .modal-close-btn { position: absolute; top: 1rem; right: 1.5rem; font-size: 2rem; color: var(--text-muted-color); cursor: pointer; border: none; background: none; }
+        .modal-close-btn { position: absolute; top: 1rem; right: 1.5rem; font-size: 2rem; color: white; cursor: pointer; border: none; background: none; z-index: 10; text-shadow: 0 0 5px black; }
         
-        /* Details Modal Specific Styles (New Layout) */
+        /* Details Modal Specific Styles */
         #details-modal-content { 
-            max-width: 900px; /* Increased max-width */
+            max-width: 900px;
             width: 90%;
             padding: 0; 
             display: flex; 
-            flex-direction: column; /* Stack banner, then content */
+            flex-direction: column;
             overflow: hidden; 
-            max-height: 90vh; /* Allow modal to scroll if content is too long */
+            max-height: 90vh;
         }
         #modal-banner {
             width: 100%;
-            height: 200px; /* Fixed height for banner */
+            height: 200px;
             background-size: cover;
             background-position: center;
             flex-shrink: 0;
@@ -128,61 +116,56 @@
             border-top-right-radius: 16px;
             position: relative;
         }
-        #modal-banner::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 50%;
-            background: linear-gradient(to top, var(--surface-color), transparent);
-        }
         #modal-main-content {
             display: flex;
-            padding: 2rem;
+            padding: 1.5rem 2rem 2rem 2rem;
             flex-grow: 1;
-            overflow-y: auto; /* Allow content to scroll */
+            overflow-y: auto;
+            margin-top: -70px; /* Pulls the content up over the banner */
         }
         #modal-cover {
-            width: 150px; /* Smaller cover image when banner is present */
-            height: 225px; /* Aspect ratio 2:3 */
+            width: 150px;
+            height: 225px;
             object-fit: cover;
             border-radius: 8px;
             margin-right: 2rem;
             flex-shrink: 0;
-            position: relative;
-            top: -70px; /* Overlap with banner */
             box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+            align-self: flex-start; /* Aligns image to the top of its container */
         }
         #modal-cover.no-banner {
-            width: 250px; /* Larger cover image when no banner */
-            height: 375px; /* Aspect ratio 2:3 */
-            margin-right: 2rem;
-            top: 0; /* No overlap */
-            padding: 10px; /* Padding for larger box */
+            margin-top: 70px; /* Pushes the cover down when there's no banner */
+            width: 250px;
+            height: 375px;
         }
         #modal-details {
             flex-grow: 1;
             display: flex;
             flex-direction: column;
+            padding-top: 70px; /* Creates space for the cover image overlap */
         }
-        #modal-title-score {
+        #modal-scores {
             display: flex;
-            align-items: baseline;
-            gap: 1rem;
-            margin-bottom: 0.5rem;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
         }
-        #modal-title-score h2 {
-            margin: 0;
+        .score-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--bg-color);
+            padding: 0.4rem 0.8rem;
+            border-radius: 8px;
         }
-        #modal-title-score span {
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: var(--accent-color);
-        }
+        .score-item svg { width: 20px; height: 20px; }
+        .score-item .mal-icon { fill: #2E51A2; }
+        .score-item .kitsu-icon { fill: #FD753E; }
+        .score-item .anilist-icon { fill: #3577FF; }
+        .score-value { font-weight: 700; font-size: 1.1rem; }
         #modal-description { 
-            flex-grow: 1; /* Allow description to take available space */
-            max-height: 250px; /* Increased max-height */
+            flex-grow: 1;
+            max-height: 250px;
             overflow-y: auto; 
             margin-bottom: 1rem; 
             line-height: 1.7; 
@@ -194,7 +177,6 @@
             color: var(--text-muted-color);
             margin-bottom: 1.5rem;
         }
-
 
         /* SETTINGS MODAL */
         #settings-list { display: flex; flex-direction: column; gap: 1rem; max-height: 50vh; overflow-y: auto; }
@@ -265,10 +247,8 @@
             <div id="modal-main-content">
                 <img id="modal-cover" src="" alt="Anime Cover">
                 <div id="modal-details">
-                    <div id="modal-title-score">
-                        <h2 id="modal-title"></h2>
-                        <span id="modal-score"></span>
-                    </div>
+                    <h2 id="modal-title"></h2>
+                    <div id="modal-scores"></div>
                     <p id="modal-description"></p>
                     <p id="modal-date"></p>
                     <div class="modal-buttons">
@@ -314,7 +294,11 @@
             const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyklIrTPvtKRtOrXGeYjVXHrNsJWZk9_5MeTduo010Trw4SLb6GcMKvU3kLg9Sl2lCmfg/exec'; 
 
             // --- API CONSTANTS ---
-            const API = { ANI_LIST: 'https://graphql.anilist.co' };
+            const API = { 
+                ANI_LIST: 'https://graphql.anilist.co',
+                MAL: 'https://api.jikan.moe/v4',
+                KITSU: 'https://kitsu.io/api/edge'
+            };
 
             // --- DOM ELEMENTS ---
             const loader = document.getElementById('loader');
@@ -331,7 +315,7 @@
             const modalBanner = document.getElementById('modal-banner');
             const modalCover = document.getElementById('modal-cover');
             const modalTitle = document.getElementById('modal-title');
-            const modalScore = document.getElementById('modal-score');
+            const modalScores = document.getElementById('modal-scores');
             const modalDescription = document.getElementById('modal-description');
             const modalDate = document.getElementById('modal-date');
             const listSelector = document.getElementById('list-selector');
@@ -461,9 +445,8 @@
             }
 
             // --- DETAILS MODAL ---
-            function openDetailsModal(anime, listName) {
+            async function openDetailsModal(anime, listName) {
                 modalTitle.textContent = anime.Title;
-                modalScore.textContent = `Score: ${anime.Score || 'N/A'}`;
                 modalDescription.innerHTML = anime.Description ? anime.Description.replace(/\n/g, '<br>') : 'No description available.';
                 modalDate.textContent = `Date Added: ${new Date(anime.DateAdded).toLocaleDateString()}`;
                 
@@ -484,6 +467,42 @@
                 modalDeleteBtn.onclick = () => deleteAnime(anime);
 
                 detailsModalOverlay.style.display = 'flex';
+                fetchAndDisplayScores(anime.Title, anime.Score);
+            }
+
+            async function fetchAndDisplayScores(title, aniListScore) {
+                modalScores.innerHTML = `<div class="spinner"></div>`;
+
+                const [malScore, kitsuScore] = await Promise.all([
+                    getMalScore(title),
+                    getKitsuScore(title)
+                ]);
+
+                const anilistIcon = `<svg class="anilist-icon" viewBox="0 0 42 42" xmlns="http://www.w3.org/2000/svg"><path d="M2.61,40.5l14.06-21.82a.89.89,0,0,1,1.57,0L32.3,40.5h9.13L24.34,14.15a4,4,0,0,0-6.78,0L.48,40.5Z" transform="translate(0 -1.5)" fill-rule="evenodd"/><path d="M21,1.5a12.8,12.8,0,1,1-9.05,3.75A12.7,12.7,0,0,1,21,1.5Z" transform="translate(0 -1.5)" fill-rule="evenodd"/></svg>`;
+                const malIcon = `<svg class="mal-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><rect width="24" height="24" rx="4"/></svg>`;
+                const kitsuIcon = `<svg class="kitsu-icon" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><path d="M100,5c-52.5,0-95,42.5-95,95s42.5,95,95,95s95-42.5,95-95S152.5,5,100,5z M131.5,135.5c-3.7,1.2-8.3-2.3-12-2.3 c-3.7,0-7.7,4.3-12,4.8c-4.3,0.5-8.3-3.8-12-4.8c-3.7-1-8.3,2.3-12,2.3c-3.7,0-7.7-3.5-12-2.3c-4.3,1.2-4.3,6.2,0,7.3 c5.5,1.5,10-2.3,14.3-2.3s8.3,4.5,12,4.5s7.7-3,12-3s8.3,4.5,12,4.5s7.7-2.3,12-2.3c4.3,0,9.5,4.5,14.3,2.3 C135.8,141.7,135.8,136.7,131.5,135.5z M140,81.3c0,11.8-9.5,21.3-21.3,21.3S97.5,93,97.5,81.3S107,60,118.8,60 S140,69.5,140,81.3z M82.5,81.3c0,11.8-9.5,21.3-21.3,21.3S40,93,40,81.3S49.5,60,61.3,60S82.5,69.5,82.5,81.3z"/></svg>`;
+
+                modalScores.innerHTML = `
+                    <div class="score-item">${anilistIcon}<span class="score-value">${(aniListScore/10).toFixed(1) || 'N/A'}</span></div>
+                    <div class="score-item">${malIcon}<span class="score-value">${malScore}</span></div>
+                    <div class="score-item">${kitsuIcon}<span class="score-value">${kitsuScore}</span></div>
+                `;
+            }
+
+            async function getMalScore(title) {
+                try {
+                    const response = await fetch(`${API.MAL}/anime?q=${encodeURIComponent(title)}&limit=1`);
+                    const data = await response.json();
+                    return data.data[0]?.score?.toFixed(1) || 'N/A';
+                } catch (e) { console.error("Jikan API Error:", e); return 'N/A'; }
+            }
+
+            async function getKitsuScore(title) {
+                try {
+                    const response = await fetch(`${API.KITSU}/anime?filter[text]=${encodeURIComponent(title)}&page[limit]=1`);
+                    const data = await response.json();
+                    return data.data[0]?.attributes?.averageRating ? (data.data[0].attributes.averageRating / 10).toFixed(1) : 'N/A';
+                } catch (e) { console.error("Kitsu API Error:", e); return 'N/A'; }
             }
 
             // --- ACTION/SETTINGS MODALS ---
@@ -532,7 +551,6 @@
                 allAnime.push(newAnimeWithCategory);
                 renderCurrentView();
                 showNotification('Anime added successfully!', 'success');
-                // Corrected to send the object with the category property
                 fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'add', anime: newAnimeWithCategory }) })
                 .catch(err => {
                     allAnime = allAnime.filter(a => a.AniListID !== anime.AniListID);
