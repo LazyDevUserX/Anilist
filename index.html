@@ -14,6 +14,8 @@
             --text-color: #e0e0e0;
             --text-muted-color: #888;
             --border-color: #333;
+            --success-color: #4caf50;
+            --error-color: #f44336;
             --card-hover-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
             --modal-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
             --border-radius: 12px;
@@ -205,6 +207,29 @@
         #save-btn:hover { background-color: #5849b3; }
         #close-modal { position: absolute; top: 1rem; right: 1.5rem; font-size: 2rem; color: var(--text-muted-color); cursor: pointer; }
         
+        /* NOTIFICATION STYLES */
+        #notification-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 3000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .notification {
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            color: white;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            animation: slideInNotification 0.3s ease forwards, fadeOutNotification 0.5s ease 2.5s forwards;
+        }
+        .notification.success { background-color: var(--success-color); }
+        .notification.error { background-color: var(--error-color); }
+        @keyframes slideInNotification { from { opacity: 0; transform: translateX(100%); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes fadeOutNotification { from { opacity: 1; } to { opacity: 0; } }
+
+
         /* UTILITIES & LOADER */
         .hidden { display: none; }
         #loader {
@@ -235,7 +260,7 @@
     <header>
         <div id="logo">Ani<span>Shelf</span></div>
         <div id="search-container">
-            <svg id="search-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            <svg id="search-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
             <input type="text" id="search-bar" placeholder="Search for an anime...">
             <div id="search-results"></div>
         </div>
@@ -267,10 +292,12 @@
         </div>
     </div>
 
+    <div id="notification-container"></div>
+
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             // --- CONFIGURATION ---
-            const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzdmg9ww62tUS5PgRKyLbMI_IJKebh1PCxQNcLGUg1vBOWqByXf878w5TFzWiZPra7Q3w/exec'; // IMPORTANT: Replace with your deployed script URL
+            const SCRIPT_URL = 'YOUR_GOOGLE_SHEETS_WEB_APP_URL'; // IMPORTANT: Replace with your deployed script URL
 
             // --- API CONSTANTS ---
             const API = {
@@ -302,7 +329,6 @@
                     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                     animeData = await response.json();
                     renderTabs();
-                    // Set the first list as the active one
                     if (Object.keys(animeData).length > 0) {
                         currentList = Object.keys(animeData)[0];
                         setActiveTab(currentList);
@@ -310,7 +336,7 @@
                     }
                 } catch (error) {
                     console.error('Failed to load data:', error);
-                    alert('Error: Could not fetch data from Google Sheets. Please check the URL and script permissions.');
+                    showNotification('Error: Could not fetch data from Google Sheets.', 'error');
                 } finally {
                     hideLoader();
                 }
@@ -365,9 +391,8 @@
                 document.getElementById('modal-title').textContent = anime.Title;
                 document.getElementById('modal-cover').style.backgroundImage = `url('${anime.CoverImage}')`;
                 document.getElementById('modal-description').innerHTML = anime.Description || 'No description available.';
-                document.getElementById('modal-date').textContent = `Date Added: ${new Date(anime.DateAdded).toLocaleDateString()}`;
+                document.getElementById('modal-date').textContent = `Date Added: ${new Date(anime.DateAdded).toLocaleDateDate()}`;
 
-                // Populate list selector
                 const listSelector = document.getElementById('list-selector');
                 listSelector.innerHTML = '';
                 Object.keys(animeData).forEach(name => {
@@ -388,35 +413,24 @@
                 const scoresContainer = document.getElementById('modal-scores');
                 scoresContainer.innerHTML = `<div class="spinner"></div>`;
 
-                const aniListScorePromise = getAniListScore(title);
-                const malScorePromise = getMalScore(title);
-                const kitsuScorePromise = getKitsuScore(title);
-
-                const [aniListScore, malScore, kitsuScore] = await Promise.all([aniListScorePromise, malScorePromise, kitsuScorePromise]);
+                const [aniListScore, malScore, kitsuScore] = await Promise.all([
+                    getAniListScore(title),
+                    getMalScore(title),
+                    getKitsuScore(title)
+                ]);
                 
                 scoresContainer.innerHTML = `
-                    <div class="score-item">
-                        <div class="score-value">${aniListScore}</div>
-                        <div class="score-label">AniList</div>
-                    </div>
-                    <div class="score-item">
-                        <div class="score-value">${malScore}</div>
-                        <div class="score-label">MyAnimeList</div>
-                    </div>
-                    <div class="score-item">
-                        <div class="score-value">${kitsuScore}</div>
-                        <div class="score-label">Kitsu</div>
-                    </div>
+                    <div class="score-item"><div class="score-value">${aniListScore}</div><div class="score-label">AniList</div></div>
+                    <div class="score-item"><div class="score-value">${malScore}</div><div class="score-label">MyAnimeList</div></div>
+                    <div class="score-item"><div class="score-value">${kitsuScore}</div><div class="score-label">Kitsu</div></div>
                 `;
             }
 
             async function getAniListScore(title) {
-                // We assume the stored score is the AniList one, so we just return it.
                 const list = Object.values(animeData).flat();
                 const anime = list.find(a => a.Title === title);
                 return anime ? (anime.Score || 'N/A') : 'N/A';
             }
-
             async function getMalScore(title) {
                 try {
                     const response = await fetch(`${API.MAL}/anime?q=${encodeURIComponent(title)}&limit=1`);
@@ -424,7 +438,6 @@
                     return data.data[0]?.score?.toFixed(1) || 'N/A';
                 } catch (e) { return 'N/A'; }
             }
-
             async function getKitsuScore(title) {
                 try {
                     const response = await fetch(`${API.KITSU}/anime?filter[text]=${encodeURIComponent(title)}&page[limit]=1`);
@@ -433,40 +446,23 @@
                 } catch (e) { return 'N/A'; }
             }
 
-
             // --- SEARCH FUNCTIONALITY ---
-            async function handleSearch(query) {
+            function handleSearch(query) {
                 if (query.length < 3) {
                     searchResultsContainer.style.display = 'none';
                     return;
                 }
 
-                const aniListQuery = `
-                    query ($search: String) {
-                        Page(perPage: 5) {
-                            media(search: $search, type: ANIME, sort: SEARCH_MATCH) {
-                                id
-                                title { romaji english }
-                                coverImage { large }
-                                description(asHtml: false)
-                                averageScore
-                            }
-                        }
-                    }
-                `;
+                const aniListQuery = `query ($search: String) { Page(perPage: 5) { media(search: $search, type: ANIME, sort: SEARCH_MATCH) { id, title { romaji english }, coverImage { large }, description(asHtml: false), averageScore } } }`;
                 const variables = { search: query };
                 
-                try {
-                    const response = await fetch(API.ANI_LIST, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                        body: JSON.stringify({ query: aniListQuery, variables })
-                    });
-                    const result = await response.json();
+                fetch(API.ANI_LIST, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    body: JSON.stringify({ query: aniListQuery, variables })
+                }).then(res => res.json()).then(result => {
                     displaySearchResults(result.data.Page.media);
-                } catch (error) {
-                    console.error('Error searching AniList:', error);
-                }
+                }).catch(error => console.error('Error searching AniList:', error));
             }
 
             function displaySearchResults(results) {
@@ -477,26 +473,16 @@
                     results.forEach(anime => {
                         const item = document.createElement('div');
                         item.className = 'search-item';
-                        item.innerHTML = `
-                            <img src="${anime.coverImage.large}" alt="">
-                            <span>${anime.title.romaji}</span>
-                        `;
+                        item.innerHTML = `<img src="${anime.coverImage.large}" alt=""><span>${anime.title.romaji}</span>`;
                         item.onclick = () => {
                             const listToAdd = prompt(`Add "${anime.title.romaji}" to which list?`, currentList || Object.keys(animeData)[0]);
                             if(listToAdd && Object.keys(animeData).includes(listToAdd)) {
-                                const newAnime = {
-                                    AniListID: anime.id,
-                                    Title: anime.title.romaji,
-                                    Score: anime.averageScore,
-                                    Description: anime.description,
-                                    CoverImage: anime.coverImage.large,
-                                    DateAdded: new Date().toISOString()
-                                };
+                                const newAnime = { AniListID: anime.id, Title: anime.title.romaji, Score: anime.averageScore, Description: anime.description, CoverImage: anime.coverImage.large, DateAdded: new Date().toISOString() };
                                 addAnime(newAnime, listToAdd);
                                 searchBar.value = '';
                                 searchResultsContainer.style.display = 'none';
                             } else if (listToAdd) {
-                                alert(`List "${listToAdd}" does not exist. Please create it first.`);
+                                showNotification(`List "${listToAdd}" does not exist.`, 'error');
                             }
                         };
                         searchResultsContainer.appendChild(item);
@@ -505,93 +491,127 @@
                 searchResultsContainer.style.display = 'block';
             }
 
-            // --- DATA MANIPULATION (Google Sheets) ---
-            async function addAnime(anime, listName) {
-                showLoader();
-                try {
-                    const response = await fetch(SCRIPT_URL, {
-                        method: 'POST',
-                        body: JSON.stringify({ action: 'add', list: listName, data: anime })
-                    });
-                    const result = await response.json();
-                    if (result.success) {
-                        if (!animeData[listName]) animeData[listName] = [];
-                        animeData[listName].push(anime);
-                        renderAnimeGrid(listName);
-                        alert('Anime added successfully!');
-                    } else {
-                        throw new Error(result.message);
-                    }
-                } catch (error) {
+            // --- OPTIMISTIC UI DATA MANIPULATION ---
+            function addAnime(anime, listName) {
+                // 1. Optimistically update the UI
+                if (!animeData[listName]) animeData[listName] = [];
+                const originalIndex = animeData[listName].length;
+                animeData[listName].push(anime);
+                renderAnimeGrid(listName);
+                showNotification('Anime added successfully!', 'success');
+
+                // 2. Send request to server in the background
+                fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: 'add', list: listName, data: anime })
+                })
+                .then(res => res.json())
+                .then(result => {
+                    if (!result.success) throw new Error(result.message);
+                    // On success, do nothing, UI is already updated.
+                })
+                .catch(error => {
+                    // 3. On failure, revert the UI change
                     console.error('Error adding anime:', error);
-                    alert('Failed to add anime.');
-                } finally {
-                    hideLoader();
-                }
+                    showNotification('Failed to add anime to sheet. Reverting.', 'error');
+                    animeData[listName].splice(originalIndex, 1); // Remove the item
+                    renderAnimeGrid(listName); // Re-render to show the reverted state
+                });
             }
             
-            async function updateAnime(anime, newListName) {
-                showLoader();
-                try {
-                    const response = await fetch(SCRIPT_URL, {
-                        method: 'POST',
-                        body: JSON.stringify({ action: 'update', oldList: currentList, newList: newListName, data: anime })
-                    });
-                    const result = await response.json();
-                    if (result.success) {
-                        // Update local state
-                        const index = animeData[currentList].findIndex(a => a.AniListID === anime.AniListID);
-                        if (index > -1) animeData[currentList].splice(index, 1);
-                        if (!animeData[newListName]) animeData[newListName] = [];
-                        animeData[newListName].push(anime);
+            function updateAnime(anime, newListName) {
+                const oldListName = currentList;
+                if (oldListName === newListName) {
+                    closeModal();
+                    return; // Nothing to change
+                }
+                
+                // 1. Optimistically update the UI
+                const originalIndex = animeData[oldListName].findIndex(a => a.AniListID === anime.AniListID);
+                if (originalIndex === -1) return; // Should not happen
+                
+                const [movedAnime] = animeData[oldListName].splice(originalIndex, 1);
+                if (!animeData[newListName]) animeData[newListName] = [];
+                animeData[newListName].push(movedAnime);
 
-                        currentList = newListName;
-                        renderTabs();
-                        setActiveTab(currentList);
-                        renderAnimeGrid(currentList);
-                        closeModal();
-                        alert('Anime updated successfully!');
-                    } else {
-                        throw new Error(result.message);
-                    }
-                } catch (error) {
+                currentList = newListName;
+                renderTabs();
+                setActiveTab(currentList);
+                renderAnimeGrid(currentList);
+                closeModal();
+                showNotification('Anime moved successfully!', 'success');
+
+                // 2. Send request to server in background
+                fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: 'update', oldList: oldListName, newList: newListName, data: anime })
+                })
+                .then(res => res.json())
+                .then(result => {
+                    if (!result.success) throw new Error(result.message);
+                })
+                .catch(error => {
+                    // 3. On failure, revert the UI change
                     console.error('Error updating anime:', error);
-                    alert('Failed to update anime.');
-                } finally {
-                    hideLoader();
-                }
+                    showNotification('Failed to update anime on sheet. Reverting.', 'error');
+                    const [revertedAnime] = animeData[newListName].splice(animeData[newListName].length - 1, 1);
+                    animeData[oldListName].splice(originalIndex, 0, revertedAnime); // Put it back where it was
+                    
+                    currentList = oldListName; // Switch back to original list
+                    renderTabs();
+                    setActiveTab(currentList);
+                    renderAnimeGrid(currentList);
+                });
             }
 
-            async function createNewList(listName) {
-                 showLoader();
-                try {
-                    const response = await fetch(SCRIPT_URL, {
-                        method: 'POST',
-                        body: JSON.stringify({ action: 'createList', list: listName })
-                    });
-                    const result = await response.json();
-                    if (result.success) {
-                       animeData[listName] = [];
-                       renderTabs();
-                       currentList = listName;
-                       setActiveTab(currentList);
-                       renderAnimeGrid(currentList);
-                       alert(`List "${listName}" created!`);
-                    } else {
-                        throw new Error(result.message);
-                    }
-                } catch (error) {
+            function createNewList(listName) {
+                // 1. Optimistic UI update
+                animeData[listName] = [];
+                renderTabs();
+                currentList = listName;
+                setActiveTab(currentList);
+                renderAnimeGrid(currentList);
+                showNotification(`List "${listName}" created!`, 'success');
+
+                // 2. Send request to server
+                fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: 'createList', list: listName })
+                })
+                .then(res => res.json())
+                .then(result => {
+                    if (!result.success) throw new Error(result.message);
+                })
+                .catch(error => {
+                    // 3. Revert on failure
                     console.error('Error creating list:', error);
-                    alert('Failed to create new list.');
-                } finally {
-                    hideLoader();
-                }
+                    showNotification(`Failed to create list on sheet. Reverting.`, 'error');
+                    delete animeData[listName];
+                    const firstList = Object.keys(animeData)[0] || '';
+                    currentList = firstList;
+                    renderTabs();
+                    if(firstList) {
+                        setActiveTab(firstList);
+                        renderAnimeGrid(firstList);
+                    }
+                });
             }
 
-            // --- UTILITY FUNCTIONS ---
+            // --- UTILITY & NOTIFICATION FUNCTIONS ---
             function showLoader() { loader.style.display = 'block'; }
             function hideLoader() { loader.style.display = 'none'; }
             function closeModal() { modalOverlay.style.display = 'none'; }
+
+            function showNotification(message, type = 'success') {
+                const container = document.getElementById('notification-container');
+                const notification = document.createElement('div');
+                notification.className = `notification ${type}`;
+                notification.textContent = message;
+                container.appendChild(notification);
+                setTimeout(() => {
+                    notification.remove();
+                }, 3000); // Notification disappears after 3 seconds
+            }
 
             // --- EVENT LISTENERS ---
             searchIcon.addEventListener('click', () => {
@@ -601,7 +621,8 @@
 
             searchBar.addEventListener('keyup', (e) => {
                 clearTimeout(debounceTimer);
-                debounceTimer = setTimeout(() => handleSearch(e.target.value), 500);
+                // Reduced debounce timer for a faster, more responsive search feel
+                debounceTimer = setTimeout(() => handleSearch(e.target.value), 300);
             });
             
             listTabs.addEventListener('click', (e) => {
@@ -611,7 +632,7 @@
                         if (newListName && !Object.keys(animeData).includes(newListName)) {
                            createNewList(newListName);
                         } else if (newListName) {
-                           alert('A list with this name already exists.');
+                           showNotification('A list with this name already exists.', 'error');
                         }
                     } else {
                         const listName = e.target.dataset.list;
@@ -623,12 +644,8 @@
             });
 
             closeModalBtn.addEventListener('click', closeModal);
-            modalOverlay.addEventListener('click', (e) => {
-                if (e.target === modalOverlay) closeModal();
-            });
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape' && modalOverlay.style.display === 'flex') closeModal();
-            });
+            modalOverlay.addEventListener('click', (e) => { if (e.target === modalOverlay) closeModal(); });
+            document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && modalOverlay.style.display === 'flex') closeModal(); });
 
             // --- START ---
             initialize();
