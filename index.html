@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AniShelf</title>
     <style>
-        /* CSS RESET & FONT */
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
         :root {
             --bg-color: #121212;
@@ -17,33 +16,30 @@
             --border-color: #333;
             --card-hover-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
             --modal-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
-            --border-radius: 99px; /* Pill shape */
+            --border-radius: 99px;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Inter', sans-serif; background-color: var(--bg-color); color: var(--text-color); line-height: 1.6; }
 
-        /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: var(--surface-color); border-radius: 10px; }
         ::-webkit-scrollbar-thumb { background: var(--primary-color); border-radius: 10px; border: 2px solid var(--surface-color); }
         ::-webkit-scrollbar-thumb:hover { background: var(--accent-color); }
 
-        /* HEADER */
         header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 2rem; background-color: rgba(18, 18, 18, 0.8); backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 1000; border-bottom: 1px solid var(--border-color); }
         #logo { font-size: 1.5rem; font-weight: 700; cursor: pointer; }
         #logo span { color: var(--accent-color); }
         .header-actions { display: flex; align-items: center; gap: 1rem; }
         #search-container { position: relative; display: flex; align-items: center; }
-        .icon-btn { cursor: pointer; background: none; border: none; color: var(--text-muted-color); transition: color 0.2s ease; }
+        .icon-btn { cursor: pointer; background: none; border: none; color: var(--text-muted-color); transition: color 0.2s ease; padding: 0.25rem; }
         .icon-btn:hover { color: var(--text-color); }
         #search-bar { width: 0; padding: 0.5rem 0; border: none; background: transparent; color: var(--text-color); outline: none; font-size: 1rem; transition: all 0.3s ease-in-out; margin-left: 0.5rem; border-bottom: 2px solid transparent; }
         #search-bar.active { width: 250px; border-bottom: 2px solid var(--accent-color); }
-        #search-results { position: absolute; top: 120%; right: 0; width: 100%; max-height: 400px; overflow-y: auto; background: var(--surface-color); border-radius: 12px; box-shadow: var(--modal-shadow); z-index: 1001; display: none; }
+        #search-results { position: absolute; top: 120%; right: 0; width: 300px; max-height: 400px; overflow-y: auto; background: var(--surface-color); border-radius: 12px; box-shadow: var(--modal-shadow); z-index: 1001; display: none; }
         .search-item { display: flex; align-items: center; padding: 0.75rem; cursor: pointer; transition: background-color 0.2s ease; }
         .search-item:hover { background-color: rgba(255, 255, 255, 0.05); }
         .search-item img { width: 40px; height: 60px; object-fit: cover; border-radius: 4px; margin-right: 1rem; }
 
-        /* MAIN CONTENT & CONTROLS */
         main { padding: 2rem; }
         .main-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem; }
         #list-tabs-container { flex: 1; display: flex; justify-content: center; }
@@ -53,16 +49,18 @@
         #tab-slider { position: absolute; z-index: 1; top: 5px; height: calc(100% - 10px); background-color: var(--accent-color); border-radius: var(--border-radius); transition: left 0.4s cubic-bezier(0.25, 1, 0.5, 1), width 0.4s cubic-bezier(0.25, 1, 0.5, 1); }
 
         .controls-container { display: flex; gap: 1rem; }
+        .custom-select-wrapper { position: relative; background-color: var(--primary-color); border-radius: var(--border-radius); }
+        .custom-select-wrapper::after { content: '▼'; font-size: 0.6rem; color: var(--text-muted-color); position: absolute; right: 1.2rem; top: 50%; transform: translateY(-50%); pointer-events: none; }
+        #sort-options { -webkit-appearance: none; -moz-appearance: none; appearance: none; background: transparent; color: var(--text-color); border: none; border-radius: var(--border-radius); padding: 0.8rem 2.5rem 0.8rem 1.2rem; font-weight: 500; cursor: pointer; }
         .control-group { display: flex; background-color: var(--primary-color); border-radius: var(--border-radius); padding: 5px; align-items: center; }
-        .control-btn { background: none; border: none; padding: 0.4rem 0.8rem; cursor: pointer; color: var(--text-muted-color); display: flex; align-items: center; justify-content: center; border-radius: var(--border-radius); transition: background-color 0.2s ease, color 0.2s ease; font-weight: 500; }
+        .control-btn { background: none; border: none; padding: 0.4rem; cursor: pointer; color: var(--text-muted-color); display: flex; align-items: center; justify-content: center; border-radius: var(--border-radius); transition: background-color 0.2s ease, color 0.2s ease; }
         .control-btn.active { background-color: var(--accent-color); color: #000; }
         .control-btn svg { width: 20px; height: 20px; }
 
-        /* ANIME GRID VIEW */
         #anime-container.grid-view { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1.5rem; }
         .anime-card { position: relative; border-radius: 12px; overflow: hidden; cursor: pointer; transition: transform 0.3s ease, box-shadow 0.3s ease; animation: fadeIn 0.5s ease forwards; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        .anime-card:hover { transform: scale(1.03); box-shadow: var(--card-hover-shadow); }
+        .anime-card:hover { transform: translateY(-4px) scale(1.03); box-shadow: var(--card-hover-shadow); }
         .anime-card img { width: 100%; display: block; aspect-ratio: 2 / 3; object-fit: cover; }
         .card-overlay { position: absolute; bottom: 0; left: 0; right: 0; padding: 1rem; background: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent); }
         .card-title { font-weight: 600; font-size: 1rem; line-height: 1.2; }
@@ -71,7 +69,6 @@
         .card-notes-tooltip { visibility: hidden; opacity: 0; position: absolute; bottom: 110%; left: 50%; transform: translateX(-50%); background-color: var(--bg-color); color: var(--text-color); padding: 0.75rem; border-radius: 8px; z-index: 10; width: 250px; text-align: left; font-size: 0.9rem; line-height: 1.5; pointer-events: none; transition: opacity 0.2s ease, visibility 0.2s ease; box-shadow: var(--modal-shadow); white-space: pre-wrap; }
         .anime-card:hover .card-notes-tooltip { visibility: visible; opacity: 1; }
         
-        /* ANIME LIST VIEW */
         #anime-container.list-view { display: flex; flex-direction: column; gap: 1rem; }
         .list-item { display: flex; align-items: center; background-color: var(--surface-color); border-radius: 12px; padding: 0.75rem; cursor: pointer; transition: background-color 0.2s ease, transform 0.2s ease; animation: fadeIn 0.5s ease forwards; }
         .list-item:hover { background-color: #2a2a2a; transform: scale(1.01); }
@@ -81,10 +78,8 @@
         .list-item-score { color: var(--accent-color); font-weight: 700; }
         .list-item-date { color: var(--text-muted-color); font-size: 0.9rem; text-align: right; min-width: 100px; flex-shrink: 0; }
 
-        /* MODALS */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.8); backdrop-filter: blur(5px); z-index: 2000; display: none; justify-content: center; align-items: center; animation: fadeOverlayIn 0.3s ease; }
         .modal-content { background: var(--surface-color); padding: 2rem; border-radius: 16px; width: 90%; max-width: 500px; box-shadow: var(--modal-shadow); animation: slideUpIn 0.4s ease forwards; position: relative; }
-        @keyframes slideUpIn { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
         .modal-title { font-size: 1.5rem; margin-bottom: 1.5rem; }
         .modal-body { margin-bottom: 1.5rem; }
         .modal-body input, .modal-body textarea { width: 100%; padding: 0.8rem; font-size: 1rem; background-color: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-color); border-radius: 8px; resize: vertical; margin-bottom: 1rem; }
@@ -111,7 +106,8 @@
         #edit-details-btn { margin-right: auto; }
         #details-modal-buttons select { -webkit-appearance: none; -moz-appearance: none; appearance: none; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 0.5rem 1rem; color: var(--text-color); }
         
-        /* New Loader Style */
+        .settings-item { display: flex; justify-content: space-between; align-items: center; background: var(--bg-color); padding: 0.75rem 1rem; border-radius: 8px; }
+        
         #loader { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 3000; justify-content: center; align-items: center; }
         .loader-content { text-align: center; }
         .loader-logo { font-size: 2rem; font-weight: 700; animation: pulse 1.8s infinite ease-in-out; }
@@ -145,7 +141,13 @@
         <div class="main-header">
             <div id="list-tabs-container"><div id="list-tabs"><div id="tab-slider"></div></div></div>
             <div class="controls-container">
-                <div id="sort-controls" class="control-group"></div>
+                <div class="custom-select-wrapper">
+                    <select id="sort-options">
+                        <option value="date">Date Added</option>
+                        <option value="name">Name</option>
+                        <option value="score">Score</option>
+                    </select>
+                </div>
                 <div id="view-toggle" class="control-group">
                     <button class="control-btn active" id="grid-view-btn" title="Grid View" aria-label="Grid View"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg></button>
                     <button class="control-btn" id="list-view-btn" title="List View" aria-label="List View"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg></button>
@@ -211,7 +213,7 @@
             const loader = document.getElementById('loader');
             const animeContainer = document.getElementById('anime-container');
             const listTabs = document.getElementById('list-tabs');
-            const sortControls = document.getElementById('sort-controls');
+            const sortOptions = document.getElementById('sort-options');
             const searchIcon = document.getElementById('search-icon');
             const searchBar = document.getElementById('search-bar');
             const searchResultsContainer = document.getElementById('search-results');
@@ -420,10 +422,8 @@
                 animeToUpdate.Category = newCategory; animeToUpdate.Label = newLabel; animeToUpdate.Notes = newNotes;
                 
                 renderCurrentView();
-                if (!categoryOnly) {
-                    closeDetailsModal();
-                } else {
-                    // if only category changed, update the notes display in the open modal
+                if (!categoryOnly) closeDetailsModal();
+                else {
                     if(newNotes) {
                         modalNotesDisplay.textContent = newNotes;
                         modalNotesDisplay.style.display = 'block';
@@ -477,11 +477,11 @@
                     showNotification('Failed to create list. Reverting.', 'error');
                 });
             }
+
             function renameList(oldName, newName) {
                 if (!newName || newName === oldName) return;
                 if (categories.includes(newName)) {
-                    showNotification(`List "${newName}" already exists.`, 'error');
-                    return;
+                    showNotification(`List "${newName}" already exists.`, 'error'); return;
                 }
                 const originalCategories = [...categories];
                 const originalAnime = JSON.parse(JSON.stringify(allAnime));
@@ -493,14 +493,14 @@
                 showNotification(`Renamed "${oldName}" to "${newName}"`, 'success');
                 fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'renameList', oldName, newName }) })
                 .catch(err => {
-                    categories = originalCategories;
-                    allAnime = originalAnime;
+                    categories = originalCategories; allAnime = originalAnime;
                     if (currentList === newName) currentList = oldName;
                     renderTabs(); openSettingsModal();
                     setTimeout(() => updateActiveTab(document.querySelector(`.tab[data-list="${currentList}"]`)), 10);
                     showNotification('Failed to rename list. Reverting.', 'error');
                 });
             }
+
             function deleteList(listName) {
                 const animeInListCount = allAnime.filter(a => a.Category === listName).length;
                 let confirmMsg = `Are you sure you want to delete the category "${listName}"?`;
@@ -516,8 +516,7 @@
                 showNotification(`Deleted list "${listName}"`, 'success');
                 fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'deleteList', listName }) })
                 .catch(err => {
-                    allAnime = originalAnime;
-                    categories = originalCategories;
+                    allAnime = originalAnime; categories = originalCategories;
                     renderTabs(); openSettingsModal(); renderCurrentView();
                     showNotification(`Error deleting list. Reverting.`, 'error');
                 });
@@ -538,23 +537,12 @@
                 setView(currentView);
             }
             function setupSortToggle() {
-                const sorts = { date: 'Date Added', name: 'Name', score: 'Score' };
-                sortControls.innerHTML = '';
-                for (const key in sorts) {
-                    const btn = document.createElement('button');
-                    btn.className = 'control-btn';
-                    btn.dataset.sort = key;
-                    btn.textContent = sorts[key];
-                    if (key === currentSort) btn.classList.add('active');
-                    btn.addEventListener('click', () => {
-                        currentSort = key;
-                        localStorage.setItem('sortPreference', currentSort);
-                        document.querySelectorAll('#sort-controls .control-btn').forEach(b => b.classList.remove('active'));
-                        btn.classList.add('active');
-                        renderCurrentView();
-                    });
-                    sortControls.appendChild(btn);
-                }
+                sortOptions.value = currentSort;
+                sortOptions.addEventListener('change', (e) => {
+                    currentSort = e.target.value;
+                    localStorage.setItem('sortPreference', currentSort);
+                    renderCurrentView();
+                });
             }
 
             function showLoader() { loader.style.display = 'flex'; }
@@ -573,7 +561,7 @@
 
             function openSettingsModal() {
                 const settingsModalOverlay = document.getElementById('settings-modal-overlay');
-                const settingsList = document.getElementById('settings-list');
+                const settingsList = settingsModalOverlay.querySelector('#settings-list');
                 settingsList.innerHTML = '';
                 categories.forEach(listName => {
                     const item = document.createElement('div');
@@ -583,9 +571,11 @@
                 });
                 settingsModalOverlay.style.display = 'flex';
             }
+
             document.getElementById('settings-modal-overlay').addEventListener('click', e => {
                 const target = e.target.closest('.icon-btn, #settings-add-new-btn, .modal-close-btn, [data-action="close"]');
-                if (!target && e.target !== e.currentTarget) return; // Ignore clicks inside content
+                const overlay = document.getElementById('settings-modal-overlay');
+                if (!target && e.target !== overlay) return;
                 
                 if (target?.classList.contains('rename-btn')) {
                     const oldName = target.dataset.list;
@@ -601,8 +591,8 @@
                     if (newListName && !categories.includes(newListName)) createNewList(newListName);
                     else if (newListName) showNotification('A list with this name already exists.', 'error');
                 }
-                else if (target === e.currentTarget || target?.classList.contains('modal-close-btn') || target?.dataset.action === "close") {
-                    e.currentTarget.style.display = 'none';
+                else if (target === overlay || target?.closest('.modal-close-btn') || target?.dataset.action === "close") {
+                    overlay.style.display = 'none';
                 }
             });
 
