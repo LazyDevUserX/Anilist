@@ -234,7 +234,7 @@
                 <div id="search-results"></div>
             </div>
             <button class="icon-btn" id="settings-btn">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l-.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
             </button>
         </div>
     </header>
@@ -311,7 +311,7 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             // --- CONFIGURATION ---
-            const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzxvuWNiX6Q-BtvW4w4gtaU03svKEKIX3LxhH0ADpbBxkh8fSL1k0GL6JXks7_9b8SiIg/exec'; // <-- PASTE YOUR URL HERE
+            const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyklIrTPvtKRtOrXGeYjVXHrNsJWZk9_5MeTduo010Trw4SLb6GcMKvU3kLg9Sl2lCmfg/exec'; 
 
             // --- API CONSTANTS ---
             const API = { ANI_LIST: 'https://graphql.anilist.co' };
@@ -467,17 +467,15 @@
                 modalDescription.innerHTML = anime.Description ? anime.Description.replace(/\n/g, '<br>') : 'No description available.';
                 modalDate.textContent = `Date Added: ${new Date(anime.DateAdded).toLocaleDateString()}`;
                 
-                // Set cover image
                 modalCover.src = anime.CoverImage;
                 
-                // Set banner image if available, otherwise adjust cover styling
                 if (anime.BannerImage) {
                     modalBanner.style.backgroundImage = `url('${anime.BannerImage}')`;
                     modalBanner.style.display = 'block';
                     modalCover.classList.remove('no-banner');
                 } else {
                     modalBanner.style.display = 'none';
-                    modalCover.classList.add('no-banner'); // Apply larger styling
+                    modalCover.classList.add('no-banner');
                 }
 
                 listSelector.innerHTML = categories.map(name => `<option value="${name}" ${name === listName ? 'selected' : ''}>${name}</option>`).join('');
@@ -502,7 +500,7 @@
                         Score: anime.averageScore, 
                         Description: anime.description, 
                         CoverImage: anime.coverImage.large, 
-                        BannerImage: anime.bannerImage, // Save banner image
+                        BannerImage: anime.bannerImage,
                         DateAdded: new Date().toISOString() 
                     };
                     addAnime(newAnime, selectedList);
@@ -534,7 +532,8 @@
                 allAnime.push(newAnimeWithCategory);
                 renderCurrentView();
                 showNotification('Anime added successfully!', 'success');
-                fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'add', anime: newAnimeWithCategory, category }) }) // Send the full anime object
+                // Corrected to send the object with the category property
+                fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'add', anime: newAnimeWithCategory }) })
                 .catch(err => {
                     allAnime = allAnime.filter(a => a.AniListID !== anime.AniListID);
                     renderCurrentView();
@@ -714,7 +713,6 @@
             
             function handleSearch(query) {
                 if (query.length < 3) { searchResultsContainer.style.display = 'none'; return; }
-                // Updated AniList query to include bannerImage
                 const aniListQuery = `query ($search: String) { Page(perPage: 5) { media(search: $search, type: ANIME, sort: SEARCH_MATCH) { id, title { romaji }, coverImage { large }, bannerImage, description(asHtml: false), averageScore } } }`;
                 fetch(API.ANI_LIST, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }, body: JSON.stringify({ query: aniListQuery, variables: { search: query } }) })
                 .then(res => res.json()).then(result => displaySearchResults(result.data.Page.media)).catch(err => console.error('AniList Search Error:', err));
@@ -729,18 +727,17 @@
                         item.className = 'search-item';
                         item.innerHTML = `<img src="${anime.coverImage.large}" alt=""><span>${anime.title.romaji}</span>`;
                         item.onclick = () => {
-                            // Pass the full anime object to showAddAnimeModal, including bannerImage
                             showAddAnimeModal(anime); 
-                            searchResultsContainer.style.display = 'none'; // Hide search results after selection
-                            searchBar.value = ''; // Clear search bar
-                            searchBar.classList.remove('active'); // Close search bar
+                            searchResultsContainer.style.display = 'none';
+                            searchBar.value = '';
+                            searchBar.classList.remove('active');
                         };
                         searchResultsContainer.appendChild(item);
                     });
                 }
                 searchResultsContainer.style.display = 'block';
             }
-            searchBar.addEventListener('keyup', (e) => { clearTimeout(debounceTimer); debounceTimer = setTimeout(() => handleSearch(e.target.value), 300); });
+            searchBar.addEventListener('keyup', e => { clearTimeout(debounceTimer); debounceTimer = setTimeout(() => handleSearch(e.target.value), 300); });
             
             initialize();
         });
