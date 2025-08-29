@@ -148,8 +148,8 @@
             backdrop-filter: blur(5px);
         }
 
-        /* MODAL POPUP */
-        #modal-overlay {
+        /* MODAL STYLES (shared for details and actions) */
+        .modal-overlay {
             position: fixed;
             top: 0;
             left: 0;
@@ -164,7 +164,9 @@
             animation: fadeOverlayIn 0.3s ease;
         }
         @keyframes fadeOverlayIn { from { opacity: 0; } to { opacity: 1; } }
-        #modal-content {
+        
+        /* DETAILS MODAL */
+        #details-modal-content {
             background-color: var(--surface-color);
             border-radius: var(--border-radius);
             box-shadow: var(--modal-shadow);
@@ -177,24 +179,42 @@
         }
         @keyframes slideUpIn { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
         #modal-cover { min-width: 250px; width: 250px; background-size: cover; background-position: center; }
-        #modal-details { padding: 2rem; overflow-y: auto; }
+        #modal-details { padding: 2rem; overflow-y: auto; position: relative; flex-grow: 1; }
         #modal-title { font-size: 2rem; font-weight: 700; margin-bottom: 1rem; }
-        #modal-scores { display: flex; gap: 1.5rem; margin-bottom: 1.5rem; }
+        #modal-scores { display: flex; gap: 1.5rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
         .score-item { text-align: center; }
         .score-value { font-size: 1.5rem; font-weight: 600; }
         .score-label { font-size: 0.8rem; color: var(--text-muted-color); }
         #modal-description { margin-bottom: 1.5rem; line-height: 1.7; color: var(--text-muted-color); }
         #modal-date { font-style: italic; color: var(--text-muted-color); margin-bottom: 1.5rem; }
         #modal-actions { display: flex; gap: 1rem; align-items: center; }
-        #list-selector {
-            padding: 0.6rem 1rem;
+        
+        /* ACTION MODAL (for adding anime/lists) */
+        #action-modal-content {
+            background: var(--surface-color);
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            width: 90%;
+            max-width: 400px;
+            box-shadow: var(--modal-shadow);
+            animation: slideUpIn 0.4s ease forwards;
+        }
+        #action-modal-title { font-size: 1.5rem; margin-bottom: 1.5rem; }
+        #action-modal-body { margin-bottom: 1.5rem; }
+        #action-modal-body select, #action-modal-body input {
+            width: 100%;
+            padding: 0.8rem;
+            font-size: 1rem;
             background-color: var(--bg-color);
             border: 1px solid var(--border-color);
             color: var(--text-color);
             border-radius: 8px;
-            font-size: 1rem;
         }
-        #save-btn {
+        #action-modal-buttons { display: flex; justify-content: flex-end; gap: 1rem; }
+
+        /* SHARED MODAL & BUTTON STYLES */
+        .modal-close-btn { position: absolute; top: 1rem; right: 1.5rem; font-size: 2rem; color: var(--text-muted-color); cursor: pointer; border: none; background: none; }
+        .primary-btn {
              padding: 0.6rem 1.5rem;
              background-color: var(--primary-color);
              border: none;
@@ -204,8 +224,26 @@
              font-weight: 500;
              transition: background-color 0.2s ease;
         }
-        #save-btn:hover { background-color: #5849b3; }
-        #close-modal { position: absolute; top: 1rem; right: 1.5rem; font-size: 2rem; color: var(--text-muted-color); cursor: pointer; }
+        .primary-btn:hover { background-color: #5849b3; }
+        .secondary-btn {
+            padding: 0.6rem 1.5rem;
+             background-color: var(--surface-color);
+             border: 1px solid var(--border-color);
+             color: var(--text-color);
+             cursor: pointer;
+             border-radius: 8px;
+             font-weight: 500;
+             transition: background-color 0.2s ease;
+        }
+        .secondary-btn:hover { background-color: var(--border-color); }
+        select {
+            padding: 0.6rem 1rem;
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            border-radius: 8px;
+            font-size: 1rem;
+        }
         
         /* NOTIFICATION STYLES */
         #notification-container {
@@ -229,16 +267,9 @@
         @keyframes slideInNotification { from { opacity: 0; transform: translateX(100%); } to { opacity: 1; transform: translateX(0); } }
         @keyframes fadeOutNotification { from { opacity: 1; } to { opacity: 0; } }
 
-
         /* UTILITIES & LOADER */
         .hidden { display: none; }
-        #loader {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 3000;
-        }
+        #loader { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 3000; }
         .spinner {
             width: 50px;
             height: 50px;
@@ -248,14 +279,11 @@
             animation: spin 1s linear infinite;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
-
     </style>
 </head>
 <body>
 
-    <div id="loader">
-        <div class="spinner"></div>
-    </div>
+    <div id="loader"><div class="spinner"></div></div>
 
     <header>
         <div id="logo">Ani<span>Shelf</span></div>
@@ -267,27 +295,35 @@
     </header>
 
     <main>
-        <nav id="list-tabs">
-            </nav>
-        <section id="anime-grid">
-            </section>
+        <nav id="list-tabs"></nav>
+        <section id="anime-grid"></section>
     </main>
 
-    <div id="modal-overlay">
-        <div id="modal-content">
+    <div id="details-modal-overlay" class="modal-overlay">
+        <div id="details-modal-content">
             <div id="modal-cover"></div>
             <div id="modal-details">
-                <span id="close-modal">&times;</span>
+                <button class="modal-close-btn">&times;</button>
                 <h2 id="modal-title"></h2>
-                <div id="modal-scores">
-                    </div>
+                <div id="modal-scores"></div>
                 <p id="modal-description"></p>
                 <p id="modal-date"></p>
                 <div id="modal-actions">
                     <label for="list-selector">Status:</label>
                     <select id="list-selector"></select>
-                    <button id="save-btn">Save</button>
+                    <button id="save-btn" class="primary-btn">Save</button>
                 </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="action-modal-overlay" class="modal-overlay">
+        <div id="action-modal-content">
+            <h3 id="action-modal-title"></h3>
+            <div id="action-modal-body"></div>
+            <div id="action-modal-buttons">
+                <button id="action-cancel-btn" class="secondary-btn">Cancel</button>
+                <button id="action-confirm-btn" class="primary-btn">Confirm</button>
             </div>
         </div>
     </div>
@@ -297,14 +333,10 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             // --- CONFIGURATION ---
-            const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzdmg9ww62tUS5PgRKyLbMI_IJKebh1PCxQNcLGUg1vBOWqByXf878w5TFzWiZPra7Q3w/exec'; // IMPORTANT: Replace with your deployed script URL
+            const SCRIPT_URL = 'YOUR_GOOGLE_SHEETS_WEB_APP_URL';
 
             // --- API CONSTANTS ---
-            const API = {
-                ANI_LIST: 'https://graphql.anilist.co',
-                MAL: 'https://api.jikan.moe/v4',
-                KITSU: 'https://kitsu.io/api/edge'
-            };
+            const API = { ANI_LIST: 'https://graphql.anilist.co', MAL: 'https://api.jikan.moe/v4', KITSU: 'https://kitsu.io/api/edge' };
 
             // --- DOM ELEMENTS ---
             const loader = document.getElementById('loader');
@@ -313,8 +345,8 @@
             const searchIcon = document.getElementById('search-icon');
             const searchBar = document.getElementById('search-bar');
             const searchResultsContainer = document.getElementById('search-results');
-            const modalOverlay = document.getElementById('modal-overlay');
-            const closeModalBtn = document.getElementById('close-modal');
+            const detailsModalOverlay = document.getElementById('details-modal-overlay');
+            const actionModalOverlay = document.getElementById('action-modal-overlay');
 
             // --- APP STATE ---
             let animeData = {};
@@ -368,30 +400,23 @@
                 animeData[listName].forEach(anime => {
                     const card = document.createElement('div');
                     card.className = 'anime-card';
-                    card.innerHTML = `
-                        <img src="${anime.CoverImage}" alt="${anime.Title}">
-                        <div class="card-score">${anime.Score || 'N/A'}</div>
-                        <div class="card-overlay">
-                            <div class="card-title">${anime.Title}</div>
-                        </div>
-                    `;
-                    card.addEventListener('click', () => openModal(anime, listName));
+                    card.innerHTML = `<img src="${anime.CoverImage}" alt="${anime.Title}"><div class="card-score">${anime.Score || 'N/A'}</div><div class="card-overlay"><div class="card-title">${anime.Title}</div></div>`;
+                    card.addEventListener('click', () => openDetailsModal(anime, listName));
                     animeGrid.appendChild(card);
                 });
             }
 
             function setActiveTab(listName) {
-                document.querySelectorAll('.tab').forEach(t => {
-                    t.classList.toggle('active', t.dataset.list === listName);
-                });
+                document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.list === listName));
             }
             
-            // --- MODAL & DATA FETCHING ---
-            async function openModal(anime, listName) {
+            // --- DETAILS MODAL & DATA FETCHING ---
+            async function openDetailsModal(anime, listName) {
                 document.getElementById('modal-title').textContent = anime.Title;
                 document.getElementById('modal-cover').style.backgroundImage = `url('${anime.CoverImage}')`;
                 document.getElementById('modal-description').innerHTML = anime.Description || 'No description available.';
-                document.getElementById('modal-date').textContent = `Date Added: ${new Date(anime.DateAdded).toLocaleDateDate()}`;
+                // BUG FIX: Corrected to toLocaleDateString()
+                document.getElementById('modal-date').textContent = `Date Added: ${new Date(anime.DateAdded).toLocaleDateString()}`;
 
                 const listSelector = document.getElementById('list-selector');
                 listSelector.innerHTML = '';
@@ -405,7 +430,7 @@
 
                 document.getElementById('save-btn').onclick = () => updateAnime(anime, listSelector.value);
 
-                modalOverlay.style.display = 'flex';
+                detailsModalOverlay.style.display = 'flex';
                 fetchAndDisplayScores(anime.Title);
             }
 
@@ -413,17 +438,9 @@
                 const scoresContainer = document.getElementById('modal-scores');
                 scoresContainer.innerHTML = `<div class="spinner"></div>`;
 
-                const [aniListScore, malScore, kitsuScore] = await Promise.all([
-                    getAniListScore(title),
-                    getMalScore(title),
-                    getKitsuScore(title)
-                ]);
+                const [aniListScore, malScore, kitsuScore] = await Promise.all([ getAniListScore(title), getMalScore(title), getKitsuScore(title) ]);
                 
-                scoresContainer.innerHTML = `
-                    <div class="score-item"><div class="score-value">${aniListScore}</div><div class="score-label">AniList</div></div>
-                    <div class="score-item"><div class="score-value">${malScore}</div><div class="score-label">MyAnimeList</div></div>
-                    <div class="score-item"><div class="score-value">${kitsuScore}</div><div class="score-label">Kitsu</div></div>
-                `;
+                scoresContainer.innerHTML = `<div class="score-item"><div class="score-value">${aniListScore}</div><div class="score-label">AniList</div></div><div class="score-item"><div class="score-value">${malScore}</div><div class="score-label">MyAnimeList</div></div><div class="score-item"><div class="score-value">${kitsuScore}</div><div class="score-label">Kitsu</div></div>`;
             }
 
             async function getAniListScore(title) {
@@ -431,176 +448,103 @@
                 const anime = list.find(a => a.Title === title);
                 return anime ? (anime.Score || 'N/A') : 'N/A';
             }
-            async function getMalScore(title) {
-                try {
-                    const response = await fetch(`${API.MAL}/anime?q=${encodeURIComponent(title)}&limit=1`);
-                    const data = await response.json();
-                    return data.data[0]?.score?.toFixed(1) || 'N/A';
-                } catch (e) { return 'N/A'; }
-            }
-            async function getKitsuScore(title) {
-                try {
-                    const response = await fetch(`${API.KITSU}/anime?filter[text]=${encodeURIComponent(title)}&page[limit]=1`);
-                    const data = await response.json();
-                    return data.data[0]?.attributes?.averageRating ? (data.data[0].attributes.averageRating / 10).toFixed(1) : 'N/A';
-                } catch (e) { return 'N/A'; }
-            }
+            async function getMalScore(title) { try { const res = await fetch(`${API.MAL}/anime?q=${encodeURIComponent(title)}&limit=1`); const data = await res.json(); return data.data[0]?.score?.toFixed(1) || 'N/A'; } catch (e) { return 'N/A'; } }
+            async function getKitsuScore(title) { try { const res = await fetch(`${API.KITSU}/anime?filter[text]=${encodeURIComponent(title)}&page[limit]=1`); const data = await res.json(); return data.data[0]?.attributes?.averageRating ? (data.data[0].attributes.averageRating / 10).toFixed(1) : 'N/A'; } catch (e) { return 'N/A'; } }
 
             // --- SEARCH FUNCTIONALITY ---
             function handleSearch(query) {
-                if (query.length < 3) {
-                    searchResultsContainer.style.display = 'none';
-                    return;
-                }
-
-                const aniListQuery = `query ($search: String) { Page(perPage: 5) { media(search: $search, type: ANIME, sort: SEARCH_MATCH) { id, title { romaji english }, coverImage { large }, description(asHtml: false), averageScore } } }`;
-                const variables = { search: query };
-                
-                fetch(API.ANI_LIST, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                    body: JSON.stringify({ query: aniListQuery, variables })
-                }).then(res => res.json()).then(result => {
-                    displaySearchResults(result.data.Page.media);
-                }).catch(error => console.error('Error searching AniList:', error));
+                if (query.length < 3) { searchResultsContainer.style.display = 'none'; return; }
+                const aniListQuery = `query ($search: String) { Page(perPage: 5) { media(search: $search, type: ANIME, sort: SEARCH_MATCH) { id, title { romaji }, coverImage { large }, description(asHtml: false), averageScore } } }`;
+                fetch(API.ANI_LIST, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }, body: JSON.stringify({ query: aniListQuery, variables: { search: query } }) })
+                .then(res => res.json()).then(result => displaySearchResults(result.data.Page.media)).catch(err => console.error('AniList Search Error:', err));
             }
 
             function displaySearchResults(results) {
                 searchResultsContainer.innerHTML = '';
-                if (!results || results.length === 0) {
-                    searchResultsContainer.innerHTML = '<div class="search-item">No results found.</div>';
-                } else {
+                if (!results || results.length === 0) { searchResultsContainer.innerHTML = '<div class="search-item">No results found.</div>'; } 
+                else {
                     results.forEach(anime => {
                         const item = document.createElement('div');
                         item.className = 'search-item';
                         item.innerHTML = `<img src="${anime.coverImage.large}" alt=""><span>${anime.title.romaji}</span>`;
-                        item.onclick = () => {
-                            const listToAdd = prompt(`Add "${anime.title.romaji}" to which list?`, currentList || Object.keys(animeData)[0]);
-                            if(listToAdd && Object.keys(animeData).includes(listToAdd)) {
-                                const newAnime = { AniListID: anime.id, Title: anime.title.romaji, Score: anime.averageScore, Description: anime.description, CoverImage: anime.coverImage.large, DateAdded: new Date().toISOString() };
-                                addAnime(newAnime, listToAdd);
-                                searchBar.value = '';
-                                searchResultsContainer.style.display = 'none';
-                            } else if (listToAdd) {
-                                showNotification(`List "${listToAdd}" does not exist.`, 'error');
-                            }
-                        };
+                        item.onclick = () => showAddAnimeModal(anime);
                         searchResultsContainer.appendChild(item);
                     });
                 }
                 searchResultsContainer.style.display = 'block';
             }
+            
+            // --- UI MODAL LOGIC ---
+            function showAddAnimeModal(anime) {
+                actionModalOverlay.style.display = 'flex';
+                document.getElementById('action-modal-title').textContent = `Add "${anime.title.romaji}"`;
+                const body = document.getElementById('action-modal-body');
+                
+                const listOptions = Object.keys(animeData).map(list => `<option value="${list}" ${list === currentList ? 'selected' : ''}>${list}</option>`).join('');
+                body.innerHTML = `<p>Add to which list?</p><select id="add-to-list-select">${listOptions}</select>`;
+                
+                document.getElementById('action-confirm-btn').onclick = () => {
+                    const selectedList = document.getElementById('add-to-list-select').value;
+                    const newAnime = { AniListID: anime.id, Title: anime.title.romaji, Score: anime.averageScore, Description: anime.description, CoverImage: anime.coverImage.large, DateAdded: new Date().toISOString() };
+                    addAnime(newAnime, selectedList);
+                    searchBar.value = '';
+                    searchResultsContainer.style.display = 'none';
+                    closeActionModal();
+                };
+            }
+
+            function showCreateListModal() {
+                actionModalOverlay.style.display = 'flex';
+                document.getElementById('action-modal-title').textContent = `Create New List`;
+                document.getElementById('action-modal-body').innerHTML = `<input type="text" id="new-list-name-input" placeholder="Enter list name...">`;
+                
+                document.getElementById('action-confirm-btn').onclick = () => {
+                    const input = document.getElementById('new-list-name-input');
+                    const newListName = input.value.trim();
+                    if (newListName && !animeData[newListName]) {
+                        createNewList(newListName);
+                        closeActionModal();
+                    } else if (!newListName) {
+                        showNotification('List name cannot be empty.', 'error');
+                    } else {
+                        showNotification('A list with this name already exists.', 'error');
+                    }
+                };
+            }
 
             // --- OPTIMISTIC UI DATA MANIPULATION ---
             function addAnime(anime, listName) {
-                // 1. Optimistically update the UI
                 if (!animeData[listName]) animeData[listName] = [];
                 const originalIndex = animeData[listName].length;
                 animeData[listName].push(anime);
-                renderAnimeGrid(listName);
+                if (currentList === listName) renderAnimeGrid(listName);
                 showNotification('Anime added successfully!', 'success');
-
-                // 2. Send request to server in the background
-                fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({ action: 'add', list: listName, data: anime })
-                })
-                .then(res => res.json())
-                .then(result => {
-                    if (!result.success) throw new Error(result.message);
-                    // On success, do nothing, UI is already updated.
-                })
-                .catch(error => {
-                    // 3. On failure, revert the UI change
-                    console.error('Error adding anime:', error);
-                    showNotification('Failed to add anime to sheet. Reverting.', 'error');
-                    animeData[listName].splice(originalIndex, 1); // Remove the item
-                    renderAnimeGrid(listName); // Re-render to show the reverted state
-                });
+                fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'add', list: listName, data: anime }) }).then(res => res.json()).then(result => { if (!result.success) throw new Error(result.message); }).catch(error => { console.error('Error adding anime:', error); showNotification('Failed to add anime to sheet. Reverting.', 'error'); animeData[listName].splice(originalIndex, 1); if (currentList === listName) renderAnimeGrid(listName); });
             }
             
             function updateAnime(anime, newListName) {
                 const oldListName = currentList;
-                if (oldListName === newListName) {
-                    closeModal();
-                    return; // Nothing to change
-                }
-                
-                // 1. Optimistically update the UI
+                if (oldListName === newListName) { closeDetailsModal(); return; }
                 const originalIndex = animeData[oldListName].findIndex(a => a.AniListID === anime.AniListID);
-                if (originalIndex === -1) return; // Should not happen
-                
+                if (originalIndex === -1) return;
                 const [movedAnime] = animeData[oldListName].splice(originalIndex, 1);
                 if (!animeData[newListName]) animeData[newListName] = [];
                 animeData[newListName].push(movedAnime);
-
-                currentList = newListName;
-                renderTabs();
-                setActiveTab(currentList);
-                renderAnimeGrid(currentList);
-                closeModal();
-                showNotification('Anime moved successfully!', 'success');
-
-                // 2. Send request to server in background
-                fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({ action: 'update', oldList: oldListName, newList: newListName, data: anime })
-                })
-                .then(res => res.json())
-                .then(result => {
-                    if (!result.success) throw new Error(result.message);
-                })
-                .catch(error => {
-                    // 3. On failure, revert the UI change
-                    console.error('Error updating anime:', error);
-                    showNotification('Failed to update anime on sheet. Reverting.', 'error');
-                    const [revertedAnime] = animeData[newListName].splice(animeData[newListName].length - 1, 1);
-                    animeData[oldListName].splice(originalIndex, 0, revertedAnime); // Put it back where it was
-                    
-                    currentList = oldListName; // Switch back to original list
-                    renderTabs();
-                    setActiveTab(currentList);
-                    renderAnimeGrid(currentList);
-                });
+                currentList = newListName; renderTabs(); setActiveTab(currentList); renderAnimeGrid(currentList); closeDetailsModal(); showNotification('Anime moved successfully!', 'success');
+                fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'update', oldList: oldListName, newList: newListName, data: anime }) }).then(res => res.json()).then(result => { if (!result.success) throw new Error(result.message); }).catch(error => { console.error('Error updating anime:', error); showNotification('Failed to update anime on sheet. Reverting.', 'error'); const [revertedAnime] = animeData[newListName].splice(animeData[newListName].length - 1, 1); animeData[oldListName].splice(originalIndex, 0, revertedAnime); currentList = oldListName; renderTabs(); setActiveTab(currentList); renderAnimeGrid(currentList); });
             }
 
             function createNewList(listName) {
-                // 1. Optimistic UI update
                 animeData[listName] = [];
-                renderTabs();
-                currentList = listName;
-                setActiveTab(currentList);
-                renderAnimeGrid(currentList);
-                showNotification(`List "${listName}" created!`, 'success');
-
-                // 2. Send request to server
-                fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({ action: 'createList', list: listName })
-                })
-                .then(res => res.json())
-                .then(result => {
-                    if (!result.success) throw new Error(result.message);
-                })
-                .catch(error => {
-                    // 3. Revert on failure
-                    console.error('Error creating list:', error);
-                    showNotification(`Failed to create list on sheet. Reverting.`, 'error');
-                    delete animeData[listName];
-                    const firstList = Object.keys(animeData)[0] || '';
-                    currentList = firstList;
-                    renderTabs();
-                    if(firstList) {
-                        setActiveTab(firstList);
-                        renderAnimeGrid(firstList);
-                    }
-                });
+                renderTabs(); currentList = listName; setActiveTab(currentList); renderAnimeGrid(currentList); showNotification(`List "${listName}" created!`, 'success');
+                fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'createList', list: listName }) }).then(res => res.json()).then(result => { if (!result.success) throw new Error(result.message); }).catch(error => { console.error('Error creating list:', error); showNotification(`Failed to create list. Reverting.`, 'error'); delete animeData[listName]; const firstList = Object.keys(animeData)[0] || ''; currentList = firstList; renderTabs(); if (firstList) { setActiveTab(firstList); renderAnimeGrid(firstList); } });
             }
 
             // --- UTILITY & NOTIFICATION FUNCTIONS ---
             function showLoader() { loader.style.display = 'block'; }
             function hideLoader() { loader.style.display = 'none'; }
-            function closeModal() { modalOverlay.style.display = 'none'; }
+            function closeDetailsModal() { detailsModalOverlay.style.display = 'none'; }
+            function closeActionModal() { actionModalOverlay.style.display = 'none'; }
 
             function showNotification(message, type = 'success') {
                 const container = document.getElementById('notification-container');
@@ -608,46 +552,28 @@
                 notification.className = `notification ${type}`;
                 notification.textContent = message;
                 container.appendChild(notification);
-                setTimeout(() => {
-                    notification.remove();
-                }, 3000); // Notification disappears after 3 seconds
+                setTimeout(() => { notification.remove(); }, 3000);
             }
 
             // --- EVENT LISTENERS ---
-            searchIcon.addEventListener('click', () => {
-                searchBar.classList.toggle('active');
-                searchBar.focus();
-            });
-
-            searchBar.addEventListener('keyup', (e) => {
-                clearTimeout(debounceTimer);
-                // Reduced debounce timer for a faster, more responsive search feel
-                debounceTimer = setTimeout(() => handleSearch(e.target.value), 300);
-            });
+            searchIcon.addEventListener('click', () => { searchBar.classList.toggle('active'); searchBar.focus(); });
+            searchBar.addEventListener('keyup', (e) => { clearTimeout(debounceTimer); debounceTimer = setTimeout(() => handleSearch(e.target.value), 300); });
             
             listTabs.addEventListener('click', (e) => {
-                if (e.target.classList.contains('tab')) {
-                    if (e.target.id === 'add-list-btn') {
-                        const newListName = prompt("Enter the name for the new list:");
-                        if (newListName && !Object.keys(animeData).includes(newListName)) {
-                           createNewList(newListName);
-                        } else if (newListName) {
-                           showNotification('A list with this name already exists.', 'error');
-                        }
-                    } else {
-                        const listName = e.target.dataset.list;
-                        currentList = listName;
-                        setActiveTab(listName);
-                        renderAnimeGrid(listName);
-                    }
-                }
+                if (e.target.id === 'add-list-btn') { showCreateListModal(); } 
+                else if (e.target.classList.contains('tab')) { const listName = e.target.dataset.list; currentList = listName; setActiveTab(listName); renderAnimeGrid(listName); }
             });
 
-            closeModalBtn.addEventListener('click', closeModal);
-            modalOverlay.addEventListener('click', (e) => { if (e.target === modalOverlay) closeModal(); });
-            document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && modalOverlay.style.display === 'flex') closeModal(); });
+            document.querySelectorAll('.modal-close-btn').forEach(btn => btn.addEventListener('click', closeDetailsModal));
+            detailsModalOverlay.addEventListener('click', (e) => { if (e.target === detailsModalOverlay) closeDetailsModal(); });
+            
+            document.getElementById('action-cancel-btn').addEventListener('click', closeActionModal);
+            actionModalOverlay.addEventListener('click', (e) => { if (e.target === actionModalOverlay) closeActionModal(); });
 
-            // --- START ---
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') { closeDetailsModal(); closeActionModal(); }
+            });
+
             initialize();
         });
     </script>
