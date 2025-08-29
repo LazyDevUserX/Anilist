@@ -10,7 +10,8 @@
         :root {
             --bg-color: #121212;
             --surface-color: #1e1e1e;
-            --primary-color: #6a5acd;
+            --primary-color: #2D303E; /* Dark purple from image */
+            --accent-color: #63E8C2; /* Mint green from image */
             --text-color: #e0e0e0;
             --text-muted-color: #888;
             --border-color: #333;
@@ -18,7 +19,7 @@
             --error-color: #f44336;
             --card-hover-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
             --modal-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
-            --border-radius: 12px;
+            --border-radius: 99px; /* Pill shape */
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -42,242 +43,98 @@
             border-bottom: 1px solid var(--border-color);
         }
         #logo { font-size: 1.5rem; font-weight: 700; cursor: pointer; }
-        #logo span { color: var(--primary-color); }
+        #logo span { color: var(--accent-color); }
+        .header-actions { display: flex; align-items: center; gap: 1rem; }
         #search-container { position: relative; display: flex; align-items: center; }
-        #search-icon { cursor: pointer; font-size: 1.5rem; }
-        #search-bar {
-            width: 0;
-            padding: 0.5rem 0;
-            border: none;
-            background: transparent;
-            color: var(--text-color);
-            outline: none;
-            font-size: 1rem;
-            transition: all 0.3s ease-in-out;
-            margin-left: 0.5rem;
-            border-bottom: 2px solid transparent;
-        }
-        #search-bar.active {
-            width: 300px;
-            border-bottom: 2px solid var(--primary-color);
-        }
-        #search-results {
-            position: absolute;
-            top: 120%;
-            right: 0;
-            width: 100%;
-            max-height: 400px;
-            overflow-y: auto;
-            background: var(--surface-color);
-            border-radius: var(--border-radius);
-            box-shadow: var(--modal-shadow);
-            z-index: 1001;
-            display: none;
-        }
-        .search-item {
-            display: flex;
-            align-items: center;
-            padding: 0.75rem;
-            cursor: pointer;
-            transition: background-color 0.2s ease;
-        }
+        .icon-btn { cursor: pointer; background: none; border: none; color: var(--text-muted-color); transition: color 0.2s ease; }
+        .icon-btn:hover { color: var(--text-color); }
+        #search-bar { width: 0; padding: 0.5rem 0; border: none; background: transparent; color: var(--text-color); outline: none; font-size: 1rem; transition: all 0.3s ease-in-out; margin-left: 0.5rem; border-bottom: 2px solid transparent; }
+        #search-bar.active { width: 250px; border-bottom: 2px solid var(--accent-color); }
+        #search-results { position: absolute; top: 120%; right: 0; width: 100%; max-height: 400px; overflow-y: auto; background: var(--surface-color); border-radius: 12px; box-shadow: var(--modal-shadow); z-index: 1001; display: none; }
+        .search-item { display: flex; align-items: center; padding: 0.75rem; cursor: pointer; transition: background-color 0.2s ease; }
         .search-item:hover { background-color: rgba(255, 255, 255, 0.05); }
         .search-item img { width: 40px; height: 60px; object-fit: cover; border-radius: 4px; margin-right: 1rem; }
 
-        /* MAIN CONTENT & LISTS */
+        /* MAIN CONTENT & TABS */
         main { padding: 2rem; }
+        #list-tabs-container { display: flex; justify-content: center; margin-bottom: 2rem; }
         #list-tabs {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 2rem;
-            flex-wrap: wrap;
+            display: inline-flex;
+            position: relative;
+            background-color: var(--primary-color);
+            padding: 5px;
+            border-radius: var(--border-radius);
         }
         .tab {
-            padding: 0.6rem 1.2rem;
-            background-color: var(--surface-color);
+            position: relative;
+            z-index: 2;
+            padding: 0.6rem 1.5rem;
+            background: none;
             border: none;
-            color: var(--text-color);
+            color: var(--text-muted-color);
             cursor: pointer;
             border-radius: var(--border-radius);
-            font-weight: 500;
-            transition: all 0.2s ease;
-            position: relative;
+            font-weight: 600;
+            transition: color 0.4s ease;
         }
-        .tab:hover { background-color: #2a2a2a; }
-        .tab.active { background-color: var(--primary-color); color: white; }
-        #add-list-btn { background-color: transparent; border: 2px dashed var(--border-color); color: var(--text-muted-color);}
-        #add-list-btn:hover { border-color: var(--primary-color); color: var(--primary-color); }
+        .tab.active { color: #000; }
+        #tab-slider {
+            position: absolute;
+            z-index: 1;
+            top: 5px;
+            height: calc(100% - 10px);
+            background-color: var(--accent-color);
+            border-radius: var(--border-radius);
+            transition: left 0.4s cubic-bezier(0.25, 1, 0.5, 1), width 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+        }
 
-        #anime-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-            gap: 1.5rem;
-        }
+        #anime-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1.5rem; }
 
         /* ANIME CARD */
-        .anime-card {
-            position: relative;
-            border-radius: var(--border-radius);
-            overflow: hidden;
-            cursor: pointer;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            animation: fadeIn 0.5s ease forwards;
-        }
+        .anime-card { position: relative; border-radius: 12px; overflow: hidden; cursor: pointer; transition: transform 0.3s ease, box-shadow 0.3s ease; animation: fadeIn 0.5s ease forwards; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         .anime-card:hover { transform: translateY(-5px); box-shadow: var(--card-hover-shadow); }
         .anime-card img { width: 100%; display: block; aspect-ratio: 2 / 3; object-fit: cover; }
-        .card-overlay {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            padding: 1rem;
-            background: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent);
-        }
+        .card-overlay { position: absolute; bottom: 0; left: 0; right: 0; padding: 1rem; background: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent); }
         .card-title { font-weight: 600; font-size: 1rem; line-height: 1.2; }
-        .card-score {
-            position: absolute;
-            top: 8px;
-            right: 8px;
-            background-color: rgba(0, 0, 0, 0.7);
-            color: white;
-            padding: 0.25rem 0.6rem;
-            border-radius: 8px;
-            font-weight: 700;
-            font-size: 0.9rem;
-            backdrop-filter: blur(5px);
-        }
+        .card-score { position: absolute; top: 8px; right: 8px; background-color: rgba(0, 0, 0, 0.7); color: white; padding: 0.25rem 0.6rem; border-radius: 8px; font-weight: 700; font-size: 0.9rem; backdrop-filter: blur(5px); }
 
-        /* MODAL STYLES (shared for details and actions) */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(5px);
-            z-index: 2000;
-            display: none;
-            justify-content: center;
-            align-items: center;
-            animation: fadeOverlayIn 0.3s ease;
-        }
+        /* MODAL STYLES */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.8); backdrop-filter: blur(5px); z-index: 2000; display: none; justify-content: center; align-items: center; animation: fadeOverlayIn 0.3s ease; }
         @keyframes fadeOverlayIn { from { opacity: 0; } to { opacity: 1; } }
-        
-        /* DETAILS MODAL */
-        #details-modal-content {
-            background-color: var(--surface-color);
-            border-radius: var(--border-radius);
-            box-shadow: var(--modal-shadow);
-            width: 90%;
-            max-width: 800px;
-            max-height: 90vh;
-            display: flex;
-            overflow: hidden;
-            animation: slideUpIn 0.4s ease forwards;
-        }
+        .modal-content { background: var(--surface-color); padding: 2rem; border-radius: 16px; width: 90%; max-width: 500px; box-shadow: var(--modal-shadow); animation: slideUpIn 0.4s ease forwards; position: relative; }
         @keyframes slideUpIn { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        .modal-title { font-size: 1.5rem; margin-bottom: 1.5rem; }
+        .modal-body { margin-bottom: 1.5rem; }
+        .modal-body select, .modal-body input { width: 100%; padding: 0.8rem; font-size: 1rem; background-color: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-color); border-radius: 8px; }
+        .modal-buttons { display: flex; justify-content: flex-end; gap: 1rem; }
+        .modal-close-btn { position: absolute; top: 1rem; right: 1.5rem; font-size: 2rem; color: var(--text-muted-color); cursor: pointer; border: none; background: none; }
+
+        /* DETAILS MODAL OVERRIDES */
+        #details-modal-content { max-width: 800px; padding: 0; display: flex; overflow: hidden; }
         #modal-cover { min-width: 250px; width: 250px; background-size: cover; background-position: center; }
         #modal-details { padding: 2rem; overflow-y: auto; position: relative; flex-grow: 1; }
-        #modal-title { font-size: 2rem; font-weight: 700; margin-bottom: 1rem; }
-        #modal-scores { display: flex; gap: 1.5rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
-        .score-item { text-align: center; }
-        .score-value { font-size: 1.5rem; font-weight: 600; }
-        .score-label { font-size: 0.8rem; color: var(--text-muted-color); }
-        #modal-description { margin-bottom: 1.5rem; line-height: 1.7; color: var(--text-muted-color); }
-        #modal-date { font-style: italic; color: var(--text-muted-color); margin-bottom: 1.5rem; }
-        #modal-actions { display: flex; gap: 1rem; align-items: center; }
         
-        /* ACTION MODAL (for adding anime/lists) */
-        #action-modal-content {
-            background: var(--surface-color);
-            padding: 2rem;
-            border-radius: var(--border-radius);
-            width: 90%;
-            max-width: 400px;
-            box-shadow: var(--modal-shadow);
-            animation: slideUpIn 0.4s ease forwards;
-        }
-        #action-modal-title { font-size: 1.5rem; margin-bottom: 1.5rem; }
-        #action-modal-body { margin-bottom: 1.5rem; }
-        #action-modal-body select, #action-modal-body input {
-            width: 100%;
-            padding: 0.8rem;
-            font-size: 1rem;
-            background-color: var(--bg-color);
-            border: 1px solid var(--border-color);
-            color: var(--text-color);
-            border-radius: 8px;
-        }
-        #action-modal-buttons { display: flex; justify-content: flex-end; gap: 1rem; }
-
-        /* SHARED MODAL & BUTTON STYLES */
-        .modal-close-btn { position: absolute; top: 1rem; right: 1.5rem; font-size: 2rem; color: var(--text-muted-color); cursor: pointer; border: none; background: none; }
-        .primary-btn {
-             padding: 0.6rem 1.5rem;
-             background-color: var(--primary-color);
-             border: none;
-             color: white;
-             cursor: pointer;
-             border-radius: 8px;
-             font-weight: 500;
-             transition: background-color 0.2s ease;
-        }
-        .primary-btn:hover { background-color: #5849b3; }
-        .secondary-btn {
-            padding: 0.6rem 1.5rem;
-             background-color: var(--surface-color);
-             border: 1px solid var(--border-color);
-             color: var(--text-color);
-             cursor: pointer;
-             border-radius: 8px;
-             font-weight: 500;
-             transition: background-color 0.2s ease;
-        }
+        /* SETTINGS MODAL */
+        #settings-list { display: flex; flex-direction: column; gap: 1rem; max-height: 50vh; overflow-y: auto; }
+        .settings-item { display: flex; justify-content: space-between; align-items: center; background: var(--bg-color); padding: 0.75rem 1rem; border-radius: 8px; }
+        .settings-item-actions { display: flex; gap: 0.5rem; }
+        
+        /* BUTTONS, NOTIFICATIONS, LOADER */
+        .primary-btn { padding: 0.6rem 1.5rem; background-color: var(--accent-color); border: none; color: #000; cursor: pointer; border-radius: 8px; font-weight: 600; transition: background-color 0.2s ease; }
+        .primary-btn:hover { background-color: #55d4b4; }
+        .secondary-btn { padding: 0.6rem 1.5rem; background-color: var(--surface-color); border: 1px solid var(--border-color); color: var(--text-color); cursor: pointer; border-radius: 8px; font-weight: 500; transition: background-color 0.2s ease; }
         .secondary-btn:hover { background-color: var(--border-color); }
-        select {
-            padding: 0.6rem 1rem;
-            background-color: var(--bg-color);
-            border: 1px solid var(--border-color);
-            color: var(--text-color);
-            border-radius: 8px;
-            font-size: 1rem;
-        }
-        
-        /* NOTIFICATION STYLES */
-        #notification-container {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            z-index: 3000;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        .notification {
-            padding: 1rem 1.5rem;
-            border-radius: 8px;
-            color: white;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            animation: slideInNotification 0.3s ease forwards, fadeOutNotification 0.5s ease 2.5s forwards;
-        }
+        .danger-btn { color: var(--error-color); font-size: 1.2rem; }
+        select { padding: 0.6rem 1rem; background-color: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-color); border-radius: 8px; font-size: 1rem; }
+        #notification-container { position: fixed; bottom: 20px; right: 20px; z-index: 3000; display: flex; flex-direction: column; gap: 10px; }
+        .notification { padding: 1rem 1.5rem; border-radius: 8px; color: white; box-shadow: 0 4px 15px rgba(0,0,0,0.3); animation: slideInNotification 0.3s ease forwards, fadeOutNotification 0.5s ease 2.5s forwards; }
         .notification.success { background-color: var(--success-color); }
         .notification.error { background-color: var(--error-color); }
         @keyframes slideInNotification { from { opacity: 0; transform: translateX(100%); } to { opacity: 1; transform: translateX(0); } }
         @keyframes fadeOutNotification { from { opacity: 1; } to { opacity: 0; } }
-
-        /* UTILITIES & LOADER */
-        .hidden { display: none; }
         #loader { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 3000; }
-        .spinner {
-            width: 50px;
-            height: 50px;
-            border: 5px solid var(--border-color);
-            border-top-color: var(--primary-color);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
+        .spinner { width: 50px; height: 50px; border: 5px solid var(--border-color); border-top-color: var(--accent-color); border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
@@ -287,20 +144,31 @@
 
     <header>
         <div id="logo">Ani<span>Shelf</span></div>
-        <div id="search-container">
-            <svg id="search-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-            <input type="text" id="search-bar" placeholder="Search for an anime...">
-            <div id="search-results"></div>
+        <div class="header-actions">
+            <div id="search-container">
+                <button class="icon-btn" id="search-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                </button>
+                <input type="text" id="search-bar" placeholder="Search for an anime...">
+                <div id="search-results"></div>
+            </div>
+            <button class="icon-btn" id="settings-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            </button>
         </div>
     </header>
 
     <main>
-        <nav id="list-tabs"></nav>
+        <nav id="list-tabs-container">
+            <div id="list-tabs">
+                <div id="tab-slider"></div>
+                </div>
+        </nav>
         <section id="anime-grid"></section>
     </main>
 
     <div id="details-modal-overlay" class="modal-overlay">
-        <div id="details-modal-content">
+        <div id="details-modal-content" class="modal-content">
             <div id="modal-cover"></div>
             <div id="modal-details">
                 <button class="modal-close-btn">&times;</button>
@@ -318,12 +186,25 @@
     </div>
     
     <div id="action-modal-overlay" class="modal-overlay">
-        <div id="action-modal-content">
-            <h3 id="action-modal-title"></h3>
-            <div id="action-modal-body"></div>
-            <div id="action-modal-buttons">
-                <button id="action-cancel-btn" class="secondary-btn">Cancel</button>
-                <button id="action-confirm-btn" class="primary-btn">Confirm</button>
+        <div id="action-modal-content" class="modal-content">
+            <h3 class="modal-title" id="action-modal-title"></h3>
+            <div class="modal-body" id="action-modal-body"></div>
+            <div class="modal-buttons">
+                <button class="secondary-btn" data-action="close">Cancel</button>
+                <button class="primary-btn" id="action-confirm-btn">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="settings-modal-overlay" class="modal-overlay">
+        <div id="settings-modal-content" class="modal-content">
+            <button class="modal-close-btn">&times;</button>
+            <h3 class="modal-title">Manage Categories</h3>
+            <div class="modal-body">
+                <div id="settings-list"></div>
+            </div>
+            <div class="modal-buttons">
+                 <button id="settings-add-new-btn" class="primary-btn">Add New Category</button>
             </div>
         </div>
     </div>
@@ -333,7 +214,7 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             // --- CONFIGURATION ---
-            const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzdmg9ww62tUS5PgRKyLbMI_IJKebh1PCxQNcLGUg1vBOWqByXf878w5TFzWiZPra7Q3w/exec';
+            const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxWhiuhnhIszt9jOWKt5IUxfIGwi8XL6iRhXwXmfL35iNzPSA8ZFdX_xgsrxQ_udSFimA/exec'; // <-- PASTE YOUR URL HERE
 
             // --- API CONSTANTS ---
             const API = { ANI_LIST: 'https://graphql.anilist.co', MAL: 'https://api.jikan.moe/v4', KITSU: 'https://kitsu.io/api/edge' };
@@ -347,57 +228,91 @@
             const searchResultsContainer = document.getElementById('search-results');
             const detailsModalOverlay = document.getElementById('details-modal-overlay');
             const actionModalOverlay = document.getElementById('action-modal-overlay');
+            const settingsModalOverlay = document.getElementById('settings-modal-overlay');
 
             // --- APP STATE ---
-            let animeData = {};
+            let allAnime = [];
+            let categories = [];
             let currentList = '';
             let debounceTimer;
 
-            // --- INITIALIZATION ---
+            // --- DATA HANDLING & INITIALIZATION ---
             async function initialize() {
                 showLoader();
                 try {
                     const response = await fetch(SCRIPT_URL);
                     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                    animeData = await response.json();
+                    const data = await response.json();
+                    
+                    allAnime = data.anime || [];
+                    categories = data.categories || [];
+
                     renderTabs();
-                    if (Object.keys(animeData).length > 0) {
-                        currentList = Object.keys(animeData)[0];
-                        setActiveTab(currentList);
+                    if (categories.length > 0) {
+                        currentList = categories[0];
                         renderAnimeGrid(currentList);
+                        // Use timeout to ensure elements are in the DOM before calculating position
+                        setTimeout(() => updateActiveTab(document.querySelector('.tab')), 10);
+                    } else {
+                        animeGrid.innerHTML = `<p style="color: var(--text-muted-color);">Welcome! Add a category in settings to get started.</p>`;
                     }
                 } catch (error) {
                     console.error('Failed to load data:', error);
-                    showNotification('Error: Could not fetch data from Google Sheets.', 'error');
+                    showNotification('Error: Could not fetch data. Check your SCRIPT_URL and script permissions.', 'error');
                 } finally {
                     hideLoader();
                 }
             }
+            
+            function getGroupedAnime() {
+                const grouped = {};
+                categories.forEach(cat => grouped[cat] = []);
+                allAnime.forEach(anime => {
+                    if (grouped[anime.Category]) {
+                        grouped[anime.Category].push(anime);
+                    }
+                });
+                return grouped;
+            }
 
-            // --- RENDER FUNCTIONS ---
+            // --- RENDER & UI FUNCTIONS ---
             function renderTabs() {
-                listTabs.innerHTML = '';
-                Object.keys(animeData).forEach(listName => {
+                listTabs.innerHTML = '<div id="tab-slider"></div>'; // Reset with slider
+                categories.forEach(listName => {
                     const tab = document.createElement('button');
                     tab.className = 'tab';
                     tab.textContent = listName;
                     tab.dataset.list = listName;
                     listTabs.appendChild(tab);
                 });
-                const addBtn = document.createElement('button');
-                addBtn.className = 'tab';
-                addBtn.id = 'add-list-btn';
-                addBtn.textContent = '+ New List';
-                listTabs.appendChild(addBtn);
+            }
+
+            function updateActiveTab(activeTabElement) {
+                if (!activeTabElement) {
+                    // Hide slider if no tabs exist
+                    const slider = document.getElementById('tab-slider');
+                    if (slider) slider.style.width = '0px';
+                    return;
+                };
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                activeTabElement.classList.add('active');
+                currentList = activeTabElement.dataset.list;
+
+                const slider = document.getElementById('tab-slider');
+                slider.style.width = `${activeTabElement.offsetWidth}px`;
+                slider.style.left = `${activeTabElement.offsetLeft}px`;
             }
 
             function renderAnimeGrid(listName) {
+                const groupedAnime = getGroupedAnime();
+                const animeInList = groupedAnime[listName] || [];
+
                 animeGrid.innerHTML = '';
-                if (!animeData[listName] || animeData[listName].length === 0) {
-                    animeGrid.innerHTML = `<p>This list is empty. Add some anime!</p>`;
+                if (animeInList.length === 0) {
+                    animeGrid.innerHTML = `<p style="color: var(--text-muted-color);">This list is empty. Add some anime!</p>`;
                     return;
                 }
-                animeData[listName].forEach(anime => {
+                animeInList.forEach(anime => {
                     const card = document.createElement('div');
                     card.className = 'anime-card';
                     card.innerHTML = `<img src="${anime.CoverImage}" alt="${anime.Title}"><div class="card-score">${anime.Score || 'N/A'}</div><div class="card-overlay"><div class="card-title">${anime.Title}</div></div>`;
@@ -406,52 +321,204 @@
                 });
             }
 
-            function setActiveTab(listName) {
-                document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.list === listName));
-            }
-            
-            // --- DETAILS MODAL & DATA FETCHING ---
+            // --- DETAILS MODAL ---
             async function openDetailsModal(anime, listName) {
                 document.getElementById('modal-title').textContent = anime.Title;
                 document.getElementById('modal-cover').style.backgroundImage = `url('${anime.CoverImage}')`;
-                document.getElementById('modal-description').innerHTML = anime.Description || 'No description available.';
-                // BUG FIX: Corrected to toLocaleDateString()
+                document.getElementById('modal-description').innerHTML = anime.Description ? anime.Description.replace(/\n/g, '<br>') : 'No description available.';
                 document.getElementById('modal-date').textContent = `Date Added: ${new Date(anime.DateAdded).toLocaleDateString()}`;
-
                 const listSelector = document.getElementById('list-selector');
-                listSelector.innerHTML = '';
-                Object.keys(animeData).forEach(name => {
-                    const option = document.createElement('option');
-                    option.value = name;
-                    option.textContent = name;
-                    if (name === listName) option.selected = true;
-                    listSelector.appendChild(option);
-                });
-
+                listSelector.innerHTML = categories.map(name => `<option value="${name}" ${name === listName ? 'selected' : ''}>${name}</option>`).join('');
                 document.getElementById('save-btn').onclick = () => updateAnime(anime, listSelector.value);
-
                 detailsModalOverlay.style.display = 'flex';
-                fetchAndDisplayScores(anime.Title);
+                // You can add the fetchAndDisplayScores function back here if needed
             }
 
-            async function fetchAndDisplayScores(title) {
-                const scoresContainer = document.getElementById('modal-scores');
-                scoresContainer.innerHTML = `<div class="spinner"></div>`;
+            // --- ACTION/SETTINGS MODALS ---
+            function showAddAnimeModal(anime) {
+                actionModalOverlay.style.display = 'flex';
+                document.getElementById('action-modal-title').textContent = `Add "${anime.title.romaji}"`;
+                const listOptions = categories.map(list => `<option value="${list}" ${list === currentList ? 'selected' : ''}>${list}</option>`).join('');
+                document.getElementById('action-modal-body').innerHTML = `<p>Add to which list?</p><select id="add-to-list-select">${listOptions}</select>`;
+                document.getElementById('action-confirm-btn').onclick = () => {
+                    const selectedList = document.getElementById('add-to-list-select').value;
+                    const newAnime = { AniListID: anime.id, Title: anime.title.romaji, Score: anime.averageScore, Description: anime.description, CoverImage: anime.coverImage.large, DateAdded: new Date().toISOString() };
+                    addAnime(newAnime, selectedList);
+                    searchBar.value = '';
+                    searchResultsContainer.style.display = 'none';
+                    closeActionModal();
+                };
+            }
+            
+            function openSettingsModal() {
+                const settingsList = document.getElementById('settings-list');
+                settingsList.innerHTML = '';
+                categories.forEach(listName => {
+                    const item = document.createElement('div');
+                    item.className = 'settings-item';
+                    item.innerHTML = `
+                        <span>${listName}</span>
+                        <div class="settings-item-actions">
+                            <button class="icon-btn rename-btn" data-list="${listName}">✏️</button>
+                            <button class="icon-btn danger-btn delete-btn" data-list="${listName}">🗑️</button>
+                        </div>
+                    `;
+                    settingsList.appendChild(item);
+                });
+                settingsModalOverlay.style.display = 'flex';
+            }
 
-                const [aniListScore, malScore, kitsuScore] = await Promise.all([ getAniListScore(title), getMalScore(title), getKitsuScore(title) ]);
+            // --- DATA MANIPULATION (OPTIMISTIC UI) ---
+            function addAnime(anime, category) {
+                const newAnimeWithCategory = { ...anime, Category: category };
+                allAnime.push(newAnimeWithCategory);
+                if (currentList === category) renderAnimeGrid(category);
+                showNotification('Anime added successfully!', 'success');
+
+                fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'add', anime, category }) })
+                .catch(err => {
+                    allAnime = allAnime.filter(a => a.AniListID !== anime.AniListID);
+                    if (currentList === category) renderAnimeGrid(category);
+                    showNotification('Failed to add anime. Reverting.', 'error');
+                });
+            }
+            
+            function updateAnime(anime, newCategory) {
+                const oldCategory = anime.Category;
+                if (oldCategory === newCategory) { closeDetailsModal(); return; }
                 
-                scoresContainer.innerHTML = `<div class="score-item"><div class="score-value">${aniListScore}</div><div class="score-label">AniList</div></div><div class="score-item"><div class="score-value">${malScore}</div><div class="score-label">MyAnimeList</div></div><div class="score-item"><div class="score-value">${kitsuScore}</div><div class="score-label">Kitsu</div></div>`;
+                const animeToUpdate = allAnime.find(a => a.AniListID === anime.AniListID);
+                animeToUpdate.Category = newCategory;
+                renderAnimeGrid(currentList);
+                closeDetailsModal();
+                showNotification('Anime moved successfully!', 'success');
+
+                fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'update', animeId: anime.AniListID, newCategory }) })
+                .catch(err => {
+                    animeToUpdate.Category = oldCategory;
+                    renderAnimeGrid(currentList);
+                    showNotification('Failed to update anime. Reverting.', 'error');
+                });
             }
 
-            async function getAniListScore(title) {
-                const list = Object.values(animeData).flat();
-                const anime = list.find(a => a.Title === title);
-                return anime ? (anime.Score || 'N/A') : 'N/A';
-            }
-            async function getMalScore(title) { try { const res = await fetch(`${API.MAL}/anime?q=${encodeURIComponent(title)}&limit=1`); const data = await res.json(); return data.data[0]?.score?.toFixed(1) || 'N/A'; } catch (e) { return 'N/A'; } }
-            async function getKitsuScore(title) { try { const res = await fetch(`${API.KITSU}/anime?filter[text]=${encodeURIComponent(title)}&page[limit]=1`); const data = await res.json(); return data.data[0]?.attributes?.averageRating ? (data.data[0].attributes.averageRating / 10).toFixed(1) : 'N/A'; } catch (e) { return 'N/A'; } }
+            function createNewList(listName) {
+                categories.push(listName);
+                renderTabs(); openSettingsModal();
+                showNotification(`List "${listName}" created!`, 'success');
 
-            // --- SEARCH FUNCTIONALITY ---
+                fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'createList', listName }) })
+                .catch(err => {
+                    categories = categories.filter(c => c !== listName);
+                    renderTabs(); openSettingsModal();
+                    showNotification('Failed to create list. Reverting.', 'error');
+                });
+            }
+
+            function renameList(oldName, newName) {
+                if (!newName || newName === oldName) return;
+                if (categories.includes(newName)) {
+                    showNotification(`List "${newName}" already exists.`, 'error');
+                    return;
+                }
+                const originalCategories = [...categories];
+                const originalAnime = JSON.parse(JSON.stringify(allAnime));
+                categories = categories.map(c => c === oldName ? newName : c);
+                allAnime.forEach(a => { if (a.Category === oldName) a.Category = newName; });
+                if (currentList === oldName) currentList = newName;
+                renderTabs(); openSettingsModal();
+                setTimeout(() => updateActiveTab(document.querySelector(`.tab[data-list="${currentList}"]`)), 10);
+                showNotification(`Renamed "${oldName}" to "${newName}"`, 'success');
+
+                fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'renameList', oldName, newName }) })
+                .catch(err => {
+                    categories = originalCategories;
+                    allAnime = originalAnime;
+                    if (currentList === newName) currentList = oldName;
+                    renderTabs(); openSettingsModal();
+                    setTimeout(() => updateActiveTab(document.querySelector(`.tab[data-list="${currentList}"]`)), 10);
+                    showNotification('Failed to rename list. Reverting.', 'error');
+                });
+            }
+
+            function deleteList(listName) {
+                if (allAnime.some(a => a.Category === listName)) {
+                    showNotification("Cannot delete category as it's still in use.", 'error');
+                    return;
+                }
+                
+                const originalCategories = [...categories];
+                categories = categories.filter(c => c !== listName);
+                if (currentList === listName) currentList = categories[0] || '';
+                renderTabs(); openSettingsModal(); renderAnimeGrid(currentList);
+                setTimeout(() => updateActiveTab(document.querySelector(`.tab[data-list="${currentList}"]`)), 10);
+                showNotification(`Deleted list "${listName}"`, 'success');
+
+                fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'deleteList', listName }) })
+                .then(res => res.json()).then(result => { if (!result.success) throw new Error(result.message); })
+                .catch(err => {
+                    categories = originalCategories;
+                    if (currentList === (categories[0] || '')) currentList = listName;
+                    renderTabs(); openSettingsModal();
+                    showNotification(`Error: ${err.message}. Reverting.`, 'error');
+                });
+            }
+            
+            // --- EVENT LISTENERS & HELPERS ---
+            function showLoader() { loader.style.display = 'block'; }
+            function hideLoader() { loader.style.display = 'none'; }
+            function closeDetailsModal() { detailsModalOverlay.style.display = 'none'; }
+            function closeActionModal() { actionModalOverlay.style.display = 'none'; }
+            function closeSettingsModal() { settingsModalOverlay.style.display = 'none'; }
+            
+            function showNotification(message, type = 'success') {
+                const container = document.getElementById('notification-container');
+                const notification = document.createElement('div');
+                notification.className = `notification ${type}`;
+                notification.textContent = message;
+                container.appendChild(notification);
+                setTimeout(() => { notification.remove(); }, 3000);
+            }
+
+            searchIcon.addEventListener('click', () => searchBar.classList.toggle('active') && searchBar.focus());
+            document.getElementById('settings-btn').addEventListener('click', openSettingsModal);
+
+            listTabs.addEventListener('click', e => {
+                if (e.target.classList.contains('tab')) {
+                    updateActiveTab(e.target);
+                    renderAnimeGrid(e.target.dataset.list);
+                }
+            });
+            
+            settingsModalOverlay.addEventListener('click', e => {
+                const target = e.target;
+                if(target.classList.contains('rename-btn')) {
+                    const oldName = target.dataset.list;
+                    const newName = prompt(`Rename list "${oldName}" to:`, oldName);
+                    renameList(oldName, newName);
+                }
+                if(target.classList.contains('delete-btn')) {
+                    const listName = target.dataset.list;
+                    if(confirm(`Are you sure you want to delete the list "${listName}"? This cannot be undone.`)) {
+                        deleteList(listName);
+                    }
+                }
+                if (target.id === 'settings-add-new-btn') {
+                    const newListName = prompt("Enter name for the new list:");
+                    if (newListName && !categories.includes(newListName)) createNewList(newListName);
+                    else if (newListName) showNotification('A list with this name already exists.', 'error');
+                }
+            });
+
+            document.querySelectorAll('.modal-overlay').forEach(overlay => {
+                overlay.addEventListener('click', e => {
+                    if (e.target === overlay || e.target.closest('.modal-close-btn') || (e.target.closest('.modal-buttons') && e.target.dataset.action === 'close')) {
+                        overlay.style.display = 'none';
+                    }
+                });
+            });
+            document.addEventListener('keydown', e => { if (e.key === 'Escape') document.querySelectorAll('.modal-overlay').forEach(o => o.style.display = 'none'); });
+            
+            // Simplified search handler from previous versions
             function handleSearch(query) {
                 if (query.length < 3) { searchResultsContainer.style.display = 'none'; return; }
                 const aniListQuery = `query ($search: String) { Page(perPage: 5) { media(search: $search, type: ANIME, sort: SEARCH_MATCH) { id, title { romaji }, coverImage { large }, description(asHtml: false), averageScore } } }`;
@@ -473,107 +540,8 @@
                 }
                 searchResultsContainer.style.display = 'block';
             }
-            
-            // --- UI MODAL LOGIC ---
-            function showAddAnimeModal(anime) {
-                actionModalOverlay.style.display = 'flex';
-                document.getElementById('action-modal-title').textContent = `Add "${anime.title.romaji}"`;
-                const body = document.getElementById('action-modal-body');
-                
-                const listOptions = Object.keys(animeData).map(list => `<option value="${list}" ${list === currentList ? 'selected' : ''}>${list}</option>`).join('');
-                body.innerHTML = `<p>Add to which list?</p><select id="add-to-list-select">${listOptions}</select>`;
-                
-                document.getElementById('action-confirm-btn').onclick = () => {
-                    const selectedList = document.getElementById('add-to-list-select').value;
-                    const newAnime = { AniListID: anime.id, Title: anime.title.romaji, Score: anime.averageScore, Description: anime.description, CoverImage: anime.coverImage.large, DateAdded: new Date().toISOString() };
-                    addAnime(newAnime, selectedList);
-                    searchBar.value = '';
-                    searchResultsContainer.style.display = 'none';
-                    closeActionModal();
-                };
-            }
-
-            function showCreateListModal() {
-                actionModalOverlay.style.display = 'flex';
-                document.getElementById('action-modal-title').textContent = `Create New List`;
-                document.getElementById('action-modal-body').innerHTML = `<input type="text" id="new-list-name-input" placeholder="Enter list name...">`;
-                
-                document.getElementById('action-confirm-btn').onclick = () => {
-                    const input = document.getElementById('new-list-name-input');
-                    const newListName = input.value.trim();
-                    if (newListName && !animeData[newListName]) {
-                        createNewList(newListName);
-                        closeActionModal();
-                    } else if (!newListName) {
-                        showNotification('List name cannot be empty.', 'error');
-                    } else {
-                        showNotification('A list with this name already exists.', 'error');
-                    }
-                };
-            }
-
-            // --- OPTIMISTIC UI DATA MANIPULATION ---
-            function addAnime(anime, listName) {
-                if (!animeData[listName]) animeData[listName] = [];
-                const originalIndex = animeData[listName].length;
-                animeData[listName].push(anime);
-                if (currentList === listName) renderAnimeGrid(listName);
-                showNotification('Anime added successfully!', 'success');
-                fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'add', list: listName, data: anime }) }).then(res => res.json()).then(result => { if (!result.success) throw new Error(result.message); }).catch(error => { console.error('Error adding anime:', error); showNotification('Failed to add anime to sheet. Reverting.', 'error'); animeData[listName].splice(originalIndex, 1); if (currentList === listName) renderAnimeGrid(listName); });
-            }
-            
-            function updateAnime(anime, newListName) {
-                const oldListName = currentList;
-                if (oldListName === newListName) { closeDetailsModal(); return; }
-                const originalIndex = animeData[oldListName].findIndex(a => a.AniListID === anime.AniListID);
-                if (originalIndex === -1) return;
-                const [movedAnime] = animeData[oldListName].splice(originalIndex, 1);
-                if (!animeData[newListName]) animeData[newListName] = [];
-                animeData[newListName].push(movedAnime);
-                currentList = newListName; renderTabs(); setActiveTab(currentList); renderAnimeGrid(currentList); closeDetailsModal(); showNotification('Anime moved successfully!', 'success');
-                fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'update', oldList: oldListName, newList: newListName, data: anime }) }).then(res => res.json()).then(result => { if (!result.success) throw new Error(result.message); }).catch(error => { console.error('Error updating anime:', error); showNotification('Failed to update anime on sheet. Reverting.', 'error'); const [revertedAnime] = animeData[newListName].splice(animeData[newListName].length - 1, 1); animeData[oldListName].splice(originalIndex, 0, revertedAnime); currentList = oldListName; renderTabs(); setActiveTab(currentList); renderAnimeGrid(currentList); });
-            }
-
-            function createNewList(listName) {
-                animeData[listName] = [];
-                renderTabs(); currentList = listName; setActiveTab(currentList); renderAnimeGrid(currentList); showNotification(`List "${listName}" created!`, 'success');
-                fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'createList', list: listName }) }).then(res => res.json()).then(result => { if (!result.success) throw new Error(result.message); }).catch(error => { console.error('Error creating list:', error); showNotification(`Failed to create list. Reverting.`, 'error'); delete animeData[listName]; const firstList = Object.keys(animeData)[0] || ''; currentList = firstList; renderTabs(); if (firstList) { setActiveTab(firstList); renderAnimeGrid(firstList); } });
-            }
-
-            // --- UTILITY & NOTIFICATION FUNCTIONS ---
-            function showLoader() { loader.style.display = 'block'; }
-            function hideLoader() { loader.style.display = 'none'; }
-            function closeDetailsModal() { detailsModalOverlay.style.display = 'none'; }
-            function closeActionModal() { actionModalOverlay.style.display = 'none'; }
-
-            function showNotification(message, type = 'success') {
-                const container = document.getElementById('notification-container');
-                const notification = document.createElement('div');
-                notification.className = `notification ${type}`;
-                notification.textContent = message;
-                container.appendChild(notification);
-                setTimeout(() => { notification.remove(); }, 3000);
-            }
-
-            // --- EVENT LISTENERS ---
-            searchIcon.addEventListener('click', () => { searchBar.classList.toggle('active'); searchBar.focus(); });
             searchBar.addEventListener('keyup', (e) => { clearTimeout(debounceTimer); debounceTimer = setTimeout(() => handleSearch(e.target.value), 300); });
             
-            listTabs.addEventListener('click', (e) => {
-                if (e.target.id === 'add-list-btn') { showCreateListModal(); } 
-                else if (e.target.classList.contains('tab')) { const listName = e.target.dataset.list; currentList = listName; setActiveTab(listName); renderAnimeGrid(listName); }
-            });
-
-            document.querySelectorAll('.modal-close-btn').forEach(btn => btn.addEventListener('click', closeDetailsModal));
-            detailsModalOverlay.addEventListener('click', (e) => { if (e.target === detailsModalOverlay) closeDetailsModal(); });
-            
-            document.getElementById('action-cancel-btn').addEventListener('click', closeActionModal);
-            actionModalOverlay.addEventListener('click', (e) => { if (e.target === actionModalOverlay) closeActionModal(); });
-
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape') { closeDetailsModal(); closeActionModal(); }
-            });
-
             initialize();
         });
     </script>
