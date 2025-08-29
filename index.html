@@ -1,555 +1,638 @@
 <!DOCTYPE html>
-<html lang="en" class="bg-gray-950 text-white">
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <meta name="description" content="AniList Tracker with MAL/Kitsu Scores, Custom Lists & Google Sheets Sync">
-  <title>AniTracker Pro</title>
-
-  <!-- Tailwind CSS via CDN -->
-  <script src="https://cdn.tailwindcss.com?plugins=typography,forms"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            'anilist-pink': '#ff69a5',
-            'mal-orange': '#f5a442',
-            'kitsu-purple': '#7356a4',
-            'status-green': '#5cd485',
-            'status-blue': '#42a5f5',
-            'status-yellow': '#fbc02d',
-            'status-red': '#e57373',
-            'status-gray': '#9e9e9e',
-            'glass-bg': 'rgba(30, 30, 40, 0.4)',
-          },
-          backdropBlur: {
-            xs: '2px',
-          },
-          keyframes: {
-            'fade-in': { '0%': { opacity: 0 }, '100%': { opacity: 1 } },
-            'slide-up': { '0%': { transform: 'translateY(20px)', opacity: 0 }, '100%': { transform: 'translateY(0)', opacity: 1 } },
-            'scale-in': { '0%': { transform: 'scale(0.95)' }, '100%': { transform: 'scale(1)' } }
-          },
-          animation: {
-            'fade-in': 'fade-in 0.4s ease-out',
-            'slide-up': 'slide-up 0.5s ease-out',
-            'scale-in': 'scale-in 0.3s ease-out'
-          }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Anime List</title>
+    <style>
+        /* CSS RESET & FONT */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        :root {
+            --bg-color: #121212;
+            --surface-color: #1e1e1e;
+            --primary-color: #6a5acd;
+            --text-color: #e0e0e0;
+            --text-muted-color: #888;
+            --border-color: #333;
+            --card-hover-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+            --modal-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            --border-radius: 12px;
         }
-      }
-    }
-  </script>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
 
-  <!-- Alpine.js for reactivity -->
-  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+        /* HEADER & NAVIGATION */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+            background-color: rgba(30, 30, 30, 0.8);
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            border-bottom: 1px solid var(--border-color);
+        }
+        #logo { font-size: 1.5rem; font-weight: 700; cursor: pointer; }
+        #logo span { color: var(--primary-color); }
+        #search-container { position: relative; display: flex; align-items: center; }
+        #search-icon { cursor: pointer; font-size: 1.5rem; }
+        #search-bar {
+            width: 0;
+            padding: 0.5rem 0;
+            border: none;
+            background: transparent;
+            color: var(--text-color);
+            outline: none;
+            font-size: 1rem;
+            transition: all 0.3s ease-in-out;
+            margin-left: 0.5rem;
+            border-bottom: 2px solid transparent;
+        }
+        #search-bar.active {
+            width: 300px;
+            border-bottom: 2px solid var(--primary-color);
+        }
+        #search-results {
+            position: absolute;
+            top: 120%;
+            right: 0;
+            width: 100%;
+            max-height: 400px;
+            overflow-y: auto;
+            background: var(--surface-color);
+            border-radius: var(--border-radius);
+            box-shadow: var(--modal-shadow);
+            z-index: 1001;
+            display: none;
+        }
+        .search-item {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        .search-item:hover { background-color: rgba(255, 255, 255, 0.05); }
+        .search-item img { width: 40px; height: 60px; object-fit: cover; border-radius: 4px; margin-right: 1rem; }
 
-  <!-- Google Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+        /* MAIN CONTENT & LISTS */
+        main { padding: 2rem; }
+        #list-tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+        .tab {
+            padding: 0.6rem 1.2rem;
+            background-color: var(--surface-color);
+            border: none;
+            color: var(--text-color);
+            cursor: pointer;
+            border-radius: var(--border-radius);
+            font-weight: 500;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+        .tab:hover { background-color: #2a2a2a; }
+        .tab.active { background-color: var(--primary-color); color: white; }
+        #add-list-btn { background-color: transparent; border: 2px dashed var(--border-color); color: var(--text-muted-color);}
+        #add-list-btn:hover { border-color: var(--primary-color); color: var(--primary-color); }
 
-  <!-- Preconnect to APIs for faster search -->
-  <link rel="preconnect" href="https://graphql.anilist.co" />
-  <link rel="preconnect" href="https://api.jikan.moe" />
-  <link rel="preconnect" href="https://kitsu.io" />
+        #anime-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 1.5rem;
+        }
 
-  <style>
-    body { font-family: 'Inter', sans-serif; }
-    .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-    .card-hover:hover { transform: translateY(-4px); }
-    .score-badge {
-      position: absolute;
-      top: 8px;
-      left: 8px;
-      background: linear-gradient(45deg, #000, #222);
-      color: white;
-      font-weight: bold;
-      font-size: 0.75rem;
-      padding: 2px 6px;
-      border-radius: 4px;
-      z-index: 10;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-    }
-    .search-container {
-      position: relative;
-      width: 100%;
-      max-width: 600px;
-      margin: 0 auto;
-      opacity: 0;
-      transform: translateY(-10px);
-      transition: all 0.3s ease;
-    }
-    .search-container.active {
-      opacity: 1;
-      transform: translateY(0);
-    }
-    .loading-dots::after {
-      content: '...';
-      animation: dots 1.5s steps(3, end) infinite;
-    }
-    @keyframes dots {
-      0%, 20% { content: '.'; }
-      40% { content: '..'; }
-      60%, 100% { content: '...'; }
-    }
-  </style>
+        /* ANIME CARD */
+        .anime-card {
+            position: relative;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            animation: fadeIn 0.5s ease forwards;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .anime-card:hover { transform: translateY(-5px); box-shadow: var(--card-hover-shadow); }
+        .anime-card img { width: 100%; display: block; aspect-ratio: 2 / 3; object-fit: cover; }
+        .card-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 1rem;
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent);
+        }
+        .card-title { font-weight: 600; font-size: 1rem; line-height: 1.2; }
+        .card-score {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 0.25rem 0.6rem;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            backdrop-filter: blur(5px);
+        }
+
+        /* MODAL POPUP */
+        #modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            z-index: 2000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            animation: fadeOverlayIn 0.3s ease;
+        }
+        @keyframes fadeOverlayIn { from { opacity: 0; } to { opacity: 1; } }
+        #modal-content {
+            background-color: var(--surface-color);
+            border-radius: var(--border-radius);
+            box-shadow: var(--modal-shadow);
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            display: flex;
+            overflow: hidden;
+            animation: slideUpIn 0.4s ease forwards;
+        }
+        @keyframes slideUpIn { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        #modal-cover { min-width: 250px; width: 250px; background-size: cover; background-position: center; }
+        #modal-details { padding: 2rem; overflow-y: auto; }
+        #modal-title { font-size: 2rem; font-weight: 700; margin-bottom: 1rem; }
+        #modal-scores { display: flex; gap: 1.5rem; margin-bottom: 1.5rem; }
+        .score-item { text-align: center; }
+        .score-value { font-size: 1.5rem; font-weight: 600; }
+        .score-label { font-size: 0.8rem; color: var(--text-muted-color); }
+        #modal-description { margin-bottom: 1.5rem; line-height: 1.7; color: var(--text-muted-color); }
+        #modal-date { font-style: italic; color: var(--text-muted-color); margin-bottom: 1.5rem; }
+        #modal-actions { display: flex; gap: 1rem; align-items: center; }
+        #list-selector {
+            padding: 0.6rem 1rem;
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+        #save-btn {
+             padding: 0.6rem 1.5rem;
+             background-color: var(--primary-color);
+             border: none;
+             color: white;
+             cursor: pointer;
+             border-radius: 8px;
+             font-weight: 500;
+             transition: background-color 0.2s ease;
+        }
+        #save-btn:hover { background-color: #5849b3; }
+        #close-modal { position: absolute; top: 1rem; right: 1.5rem; font-size: 2rem; color: var(--text-muted-color); cursor: pointer; }
+        
+        /* UTILITIES & LOADER */
+        .hidden { display: none; }
+        #loader {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 3000;
+        }
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid var(--border-color);
+            border-top-color: var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+    </style>
 </head>
-<body class="min-h-screen bg-gradient-to-br from-gray-900 via-gray-950 to-black" x-data="app">
+<body>
 
-  <!-- Header -->
-  <header class="sticky top-0 z-50 bg-black/70 backdrop-blur-md border-b border-gray-800">
-    <div class="container mx-auto px-4 py-3 flex items-center justify-between">
-      <div class="flex items-center space-x-2">
-        <svg class="w-7 h-7 text-anilist-pink" fill="currentColor" viewBox="0 0 24 24">
-          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-        </svg>
-        <h1 class="text-xl font-bold bg-gradient-to-r from-anilist-pink to-mal-orange bg-clip-text text-transparent">
-          AniTracker Pro
-        </h1>
-      </div>
-
-      <div class="flex items-center space-x-3">
-        <!-- Search Toggle -->
-        <button @click="toggleSearch" class="p-2 hover:bg-gray-800 rounded-full transition">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
-        </button>
-
-        <!-- Dark Mode -->
-        <button @click="darkMode = !darkMode" class="p-2 hover:bg-gray-800 rounded-full transition">
-          <span x-show="darkMode">
-            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a8 8 0 100 16 8 8 0 000-16zm0 14a6 6 0 110-12 6 6 0 010 12z"></path><path d="M10 4v2m0 8v2M4.22 4.22l1.42 1.42m9.16 9.16l1.42 1.42M4.22 15.78l1.42-1.42M14.36 5.64l1.42-1.42"></path></svg>
-          </span>
-          <span x-show="!darkMode" style="display:none">
-            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
-          </span>
-        </button>
-      </div>
+    <div id="loader">
+        <div class="spinner"></div>
     </div>
 
-    <!-- Full-Width Search Bar -->
-    <div class="px-4 pb-3" x-show="searchOpen" x-transition>
-      <div class="search-container" :class="{ 'active': searchOpen }">
-        <input
-          type="text"
-          x-model="searchQuery"
-          @input.debounce.500ms="fetchSearchResults"
-          placeholder="Search anime or manga..."
-          class="w-full bg-gray-800 text-white rounded-xl pl-12 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-anilist-pink"
-          @blur="searchOpen = false"
-        />
-        <svg class="w-5 h-5 text-gray-400 absolute left-6 top-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-        </svg>
-        <div x-show="loading" class="absolute right-4 top-3.5">
-          <div class="w-5 h-5 border-2 border-anilist-pink border-t-transparent rounded-full animate-spin"></div>
+    <header>
+        <div id="logo">Ani<span>Shelf</span></div>
+        <div id="search-container">
+            <svg id="search-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            <input type="text" id="search-bar" placeholder="Search for an anime...">
+            <div id="search-results"></div>
         </div>
-      </div>
-    </div>
-  </header>
+    </header>
 
-  <!-- Hero -->
-  <section class="relative h-64 bg-gradient-to-r from-purple-900/40 to-pink-900/20 flex items-center px-4">
-    <div class="container mx-auto">
-      <h2 class="text-3xl md:text-4xl font-bold mb-2 animate-slide-up">Your Anime Universe</h2>
-      <p class="text-lg opacity-90 max-w-lg animate-slide-up" style="animation-delay: 0.2s">Track, compare, and manage your anime with multi-source scores and custom lists.</p>
-    </div>
-  </section>
+    <main>
+        <nav id="list-tabs">
+            </nav>
+        <section id="anime-grid">
+            </section>
+    </main>
 
-  <!-- Custom Lists Tabs -->
-  <section class="py-4 px-4 border-b border-gray-800">
-    <div class="container mx-auto">
-      <div class="flex space-x-1 overflow-x-auto">
-        <template x-for="list in customLists" :key="list.id">
-          <button
-            @click="activeList = list.id"
-            class="px-4 py-2 rounded-lg whitespace-nowrap transition"
-            :class="activeList === list.id ? 'bg-anilist-pink text-white' : 'hover:bg-gray-800 text-gray-300'"
-          >
-            <span x-text="list.name"></span>
-            <span class="ml-1 text-sm opacity-70" x-text="`(${list.items.length})`"></span>
-          </button>
-        </template>
-        <button @click="openCreateListModal" class="px-3 py-2 text-anilist-pink hover:bg-gray-800 rounded-lg">
-          + New List
-        </button>
-      </div>
-    </div>
-  </section>
-
-  <!-- Anime Grid -->
-  <main class="py-6 px-4">
-    <div class="container mx-auto">
-      <!-- No Results -->
-      <div x-show="searchOpen && results.length === 0 && !loading && searchQuery.length >= 2" class="text-center py-8 text-gray-400">
-        No results found for "<span x-text="searchQuery"></span>"
-      </div>
-
-      <!-- Results -->
-      <div x-show="searchOpen && results.length > 0" class="mb-6">
-        <h3 class="text-lg font-semibold mb-3">Search Results</h3>
-        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-          <template x-for="item in results" :key="item.id">
-            <div
-              class="relative rounded-lg overflow-hidden bg-gray-900 card-hover shadow-lg transform transition cursor-pointer group"
-              @click="openMediaModal(item)"
-            >
-              <div class="score-badge" x-text="formatScore(item.averageScore)"></div>
-              <img :src="item.coverImage?.extraLarge || item.coverImage?.large" alt="" class="w-full h-44 object-cover">
-              <div class="p-2">
-                <h4 class="font-medium text-sm line-clamp-2" x-text="item.title.english || item.title.romaji"></h4>
-                <span class="text-xs text-gray-400" x-text="item.format"></span>
-              </div>
-              <div class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
-                <span class="text-sm font-medium">View Details</span>
-              </div>
+    <div id="modal-overlay">
+        <div id="modal-content">
+            <div id="modal-cover"></div>
+            <div id="modal-details">
+                <span id="close-modal">&times;</span>
+                <h2 id="modal-title"></h2>
+                <div id="modal-scores">
+                    </div>
+                <p id="modal-description"></p>
+                <p id="modal-date"></p>
+                <div id="modal-actions">
+                    <label for="list-selector">Status:</label>
+                    <select id="list-selector"></select>
+                    <button id="save-btn">Save</button>
+                </div>
             </div>
-          </template>
         </div>
-      </div>
-
-      <!-- My List -->
-      <div x-show="!searchOpen || results.length === 0">
-        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-          <template x-for="item in displayedItems" :key="item.MediaId">
-            <div
-              class="relative rounded-lg overflow-hidden bg-gray-900 card-hover shadow-lg transform transition cursor-pointer group"
-              @click="openMediaModal(item)"
-            >
-              <div class="score-badge" x-text="formatScore(item.Score)"></div>
-              <img :src="item.CoverImage" alt="" class="w-full h-44 object-cover">
-              <div class="p-2">
-                <h4 class="font-medium text-sm line-clamp-2" x-text="item.Title"></h4>
-                <span class="text-xs text-gray-400" x-text="item.Format"></span>
-              </div>
-              <div class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
-                <span class="text-sm font-medium">View Details</span>
-              </div>
-            </div>
-          </template>
-        </div>
-      </div>
     </div>
-  </main>
 
-  <!-- Media Detail Modal -->
-  <div x-show="showModal" class="fixed inset-0 z-50 flex items-center justify-center p-4" style="background: rgba(0,0,0,0.8);">
-    <div x-show="showModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-90" x-transition:enter-end="opacity-100 scale-100" @click.outside="showModal = false" class="bg-gray-900 rounded-xl max-w-lg w-full overflow-hidden shadow-2xl border border-gray-700 animate-scale-in">
-      <img :src="selectedMedia.coverImage?.extraLarge || selectedMedia.coverImage?.large" alt="" class="w-full h-56 object-cover">
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- CONFIGURATION ---
+            const SCRIPT_URL = 'YOUR_GOOGLE_SHEETS_WEB_APP_URL'; // IMPORTANT: Replace with your deployed script URL
 
-      <div class="p-5">
-        <h3 class="text-xl font-bold" x-text="selectedMedia.title?.english || selectedMedia.title?.romaji"></h3>
-        <p class="text-sm text-gray-400 mt-1" x-text="selectedMedia.format + ' • ' + (selectedMedia.episodes || '?') + ' episodes'"></p>
+            // --- API CONSTANTS ---
+            const API = {
+                ANI_LIST: 'https://graphql.anilist.co',
+                MAL: 'https://api.jikan.moe/v4',
+                KITSU: 'https://kitsu.io/api/edge'
+            };
 
-        <!-- Score Badges -->
-        <div class="flex space-x-2 mt-3">
-          <span class="px-2 py-1 bg-anilist-pink/20 text-anilist-pink rounded text-xs font-medium" x-text="'AniList: ' + formatScore(selectedMedia.averageScore)"></span>
-          <span class="px-2 py-1 bg-mal-orange/20 text-mal-orange rounded text-xs font-medium" x-text="'MAL: ' + formatScore(selectedMedia.malScore)"></span>
-          <span class="px-2 py-1 bg-kitsu-purple/20 text-kitsu-purple rounded text-xs font-medium" x-text="'Kitsu: ' + formatScore(selectedMedia.kitsuScore)"></span>
-        </div>
+            // --- DOM ELEMENTS ---
+            const loader = document.getElementById('loader');
+            const animeGrid = document.getElementById('anime-grid');
+            const listTabs = document.getElementById('list-tabs');
+            const searchIcon = document.getElementById('search-icon');
+            const searchBar = document.getElementById('search-bar');
+            const searchResultsContainer = document.getElementById('search-results');
+            const modalOverlay = document.getElementById('modal-overlay');
+            const closeModalBtn = document.getElementById('close-modal');
 
-        <!-- Description -->
-        <p class="mt-4 text-sm text-gray-300" x-html="selectedMedia.description?.replace(/<br>/g, ' ').replace(/<[^>]*>?/gm, '').slice(0, 200) + '...'" x-show="selectedMedia.description"></p>
-        <p class="mt-4 text-sm text-gray-500" x-show="!selectedMedia.description">No description available.</p>
+            // --- APP STATE ---
+            let animeData = {};
+            let currentList = '';
+            let debounceTimer;
 
-        <!-- Status Selector -->
-        <div class="mt-5">
-          <label class="block text-sm font-medium mb-2">Add to List</label>
-          <select x-model="tempStatus" class="w-full bg-gray-800 rounded px-3 py-2 text-sm focus:ring-2 focus:ring-anilist-pink">
-            <option value="Planning">Planning</option>
-            <option value="Watching">Watching</option>
-            <option value="Completed">Completed</option>
-            <option value="On Hold">On Hold</option>
-            <option value="Dropped">Dropped</option>
-            <option value="Rewatching">Rewatching</option>
-          </select>
-        </div>
-
-        <!-- Action Buttons -->
-        <div class="flex space-x-3 mt-5">
-          <button @click="addToCurrentList" class="flex-1 bg-anilist-pink hover:bg-pink-600 py-2 rounded-lg font-medium transition">
-            Add to List
-          </button>
-          <button @click="showModal = false" class="px-4 py-2 border border-gray-600 rounded-lg hover:bg-gray-800 transition">
-            Close
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Create Custom List Modal -->
-  <div x-show="showCreateListModal" class="fixed inset-0 z-50 flex items-center justify-center p-4" style="background: rgba(0,0,0,0.8);">
-    <div x-show="showCreateListModal" x-transition class="bg-gray-900 rounded-xl p-6 max-w-sm w-full animate-scale-in">
-      <h3 class="text-lg font-bold mb-4">Create New List</h3>
-      <input type="text" x-model="newListName" placeholder="List name" class="w-full bg-gray-800 rounded px-3 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-anilist-pink">
-      <div class="flex space-x-3">
-        <button @click="createCustomList" class="flex-1 bg-anilist-pink py-2 rounded-lg font-medium">Create</button>
-        <button @click="showCreateListModal = false" class="px-4 py-2 border border-gray-600 rounded-lg">Cancel</button>
-      </div>
-    </div>
-  </div>
-
-
-  <!-- Alpine.js App Logic -->
-  <script>
-    // --- CONFIGURE THIS --- //
-    const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyTEn0FgzrmbtWC6Jb65r9WXBbSStbMBQzPY-StBcvXWCujVHOkq503qKUBDTAkWjaP/exec'; // 🔁 REPLACE WITH YOUR DEPLOYED URL
-    // ---------------------- //
-
-    const constants = {
-      ANI_LIST_API: 'https://graphql.anilist.co',
-      MAL_API: 'https://api.jikan.moe/v4',
-      KITSU_API: 'https://kitsu.io/api/edge'
-    };
-
-    document.addEventListener('alpine:init', () => {
-      Alpine.data('app', () => ({
-        darkMode: true,
-        searchQuery: '',
-        searchOpen: false,
-        results: [],
-        loading: false,
-
-        customLists: [
-          { id: 'planning', name: 'Planning', items: [] },
-          { id: 'watching', name: 'Watching', items: [] },
-          { id: 'completed', name: 'Completed', items: [] },
-          { id: 'onhold', name: 'On Hold', items: [] },
-          { id: 'dropped', name: 'Dropped', items: [] }
-        ],
-        activeList: 'planning',
-        showModal: false,
-        showCreateListModal: false,
-        newListName: '',
-        selectedMedia: {},
-        tempStatus: 'Planning',
-
-        get displayedItems() {
-          const list = this.customLists.find(l => l.id === this.activeList);
-          return list ? list.items : [];
-        },
-
-        toggleSearch() {
-          this.searchOpen = !this.searchOpen;
-          if (this.searchOpen) {
-            this.$nextTick(() => {
-              const input = document.querySelector('input[placeholder*="Search"]');
-              if (input) input.focus();
-            });
-          }
-        },
-
-        async fetchSearchResults() {
-          if (this.searchQuery.trim().length < 2) {
-            this.results = [];
-            return;
-          }
-
-          this.loading = true;
-          const query = `
-            query ($search: String) {
-              Page(page: 1, perPage: 20) {
-                media(search: $search, type: ANIME, sort: RELEVANCE_DESC) {
-                  id
-                  title {
-                    romaji
-                    english
-                    native
-                  }
-                  format
-                  status
-                  episodes
-                  description
-                  averageScore
-                  coverImage {
-                    extraLarge
-                    large
-                  }
-                  siteUrl
+            // --- INITIALIZATION ---
+            async function initialize() {
+                showLoader();
+                try {
+                    const response = await fetch(SCRIPT_URL);
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    animeData = await response.json();
+                    renderTabs();
+                    // Set the first list as the active one
+                    if (Object.keys(animeData).length > 0) {
+                        currentList = Object.keys(animeData)[0];
+                        setActiveTab(currentList);
+                        renderAnimeGrid(currentList);
+                    }
+                } catch (error) {
+                    console.error('Failed to load data:', error);
+                    alert('Error: Could not fetch data from Google Sheets. Please check the URL and script permissions.');
+                } finally {
+                    hideLoader();
                 }
-              }
             }
-          `;
 
-          try {
-            const response = await fetch(constants.ANI_LIST_API, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-              },
-              body: JSON.stringify({
-                query,
-                variables: { search: this.searchQuery }
-              })
+            // --- RENDER FUNCTIONS ---
+            function renderTabs() {
+                listTabs.innerHTML = '';
+                Object.keys(animeData).forEach(listName => {
+                    const tab = document.createElement('button');
+                    tab.className = 'tab';
+                    tab.textContent = listName;
+                    tab.dataset.list = listName;
+                    listTabs.appendChild(tab);
+                });
+                const addBtn = document.createElement('button');
+                addBtn.className = 'tab';
+                addBtn.id = 'add-list-btn';
+                addBtn.textContent = '+ New List';
+                listTabs.appendChild(addBtn);
+            }
+
+            function renderAnimeGrid(listName) {
+                animeGrid.innerHTML = '';
+                if (!animeData[listName] || animeData[listName].length === 0) {
+                    animeGrid.innerHTML = `<p>This list is empty. Add some anime!</p>`;
+                    return;
+                }
+                animeData[listName].forEach(anime => {
+                    const card = document.createElement('div');
+                    card.className = 'anime-card';
+                    card.innerHTML = `
+                        <img src="${anime.CoverImage}" alt="${anime.Title}">
+                        <div class="card-score">${anime.Score || 'N/A'}</div>
+                        <div class="card-overlay">
+                            <div class="card-title">${anime.Title}</div>
+                        </div>
+                    `;
+                    card.addEventListener('click', () => openModal(anime, listName));
+                    animeGrid.appendChild(card);
+                });
+            }
+
+            function setActiveTab(listName) {
+                document.querySelectorAll('.tab').forEach(t => {
+                    t.classList.toggle('active', t.dataset.list === listName);
+                });
+            }
+            
+            // --- MODAL & DATA FETCHING ---
+            async function openModal(anime, listName) {
+                document.getElementById('modal-title').textContent = anime.Title;
+                document.getElementById('modal-cover').style.backgroundImage = `url('${anime.CoverImage}')`;
+                document.getElementById('modal-description').innerHTML = anime.Description || 'No description available.';
+                document.getElementById('modal-date').textContent = `Date Added: ${new Date(anime.DateAdded).toLocaleDateString()}`;
+
+                // Populate list selector
+                const listSelector = document.getElementById('list-selector');
+                listSelector.innerHTML = '';
+                Object.keys(animeData).forEach(name => {
+                    const option = document.createElement('option');
+                    option.value = name;
+                    option.textContent = name;
+                    if (name === listName) option.selected = true;
+                    listSelector.appendChild(option);
+                });
+
+                document.getElementById('save-btn').onclick = () => updateAnime(anime, listSelector.value);
+
+                modalOverlay.style.display = 'flex';
+                fetchAndDisplayScores(anime.Title);
+            }
+
+            async function fetchAndDisplayScores(title) {
+                const scoresContainer = document.getElementById('modal-scores');
+                scoresContainer.innerHTML = `<div class="spinner"></div>`;
+
+                const aniListScorePromise = getAniListScore(title);
+                const malScorePromise = getMalScore(title);
+                const kitsuScorePromise = getKitsuScore(title);
+
+                const [aniListScore, malScore, kitsuScore] = await Promise.all([aniListScorePromise, malScorePromise, kitsuScorePromise]);
+                
+                scoresContainer.innerHTML = `
+                    <div class="score-item">
+                        <div class="score-value">${aniListScore}</div>
+                        <div class="score-label">AniList</div>
+                    </div>
+                    <div class="score-item">
+                        <div class="score-value">${malScore}</div>
+                        <div class="score-label">MyAnimeList</div>
+                    </div>
+                    <div class="score-item">
+                        <div class="score-value">${kitsuScore}</div>
+                        <div class="score-label">Kitsu</div>
+                    </div>
+                `;
+            }
+
+            async function getAniListScore(title) {
+                // We assume the stored score is the AniList one, so we just return it.
+                const list = Object.values(animeData).flat();
+                const anime = list.find(a => a.Title === title);
+                return anime ? (anime.Score || 'N/A') : 'N/A';
+            }
+
+            async function getMalScore(title) {
+                try {
+                    const response = await fetch(`${API.MAL}/anime?q=${encodeURIComponent(title)}&limit=1`);
+                    const data = await response.json();
+                    return data.data[0]?.score?.toFixed(1) || 'N/A';
+                } catch (e) { return 'N/A'; }
+            }
+
+            async function getKitsuScore(title) {
+                try {
+                    const response = await fetch(`${API.KITSU}/anime?filter[text]=${encodeURIComponent(title)}&page[limit]=1`);
+                    const data = await response.json();
+                    return data.data[0]?.attributes?.averageRating ? (data.data[0].attributes.averageRating / 10).toFixed(1) : 'N/A';
+                } catch (e) { return 'N/A'; }
+            }
+
+
+            // --- SEARCH FUNCTIONALITY ---
+            async function handleSearch(query) {
+                if (query.length < 3) {
+                    searchResultsContainer.style.display = 'none';
+                    return;
+                }
+
+                const aniListQuery = `
+                    query ($search: String) {
+                        Page(perPage: 5) {
+                            media(search: $search, type: ANIME, sort: SEARCH_MATCH) {
+                                id
+                                title { romaji english }
+                                coverImage { large }
+                                description(asHtml: false)
+                                averageScore
+                            }
+                        }
+                    }
+                `;
+                const variables = { search: query };
+                
+                try {
+                    const response = await fetch(API.ANI_LIST, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                        body: JSON.stringify({ query: aniListQuery, variables })
+                    });
+                    const result = await response.json();
+                    displaySearchResults(result.data.Page.media);
+                } catch (error) {
+                    console.error('Error searching AniList:', error);
+                }
+            }
+
+            function displaySearchResults(results) {
+                searchResultsContainer.innerHTML = '';
+                if (!results || results.length === 0) {
+                    searchResultsContainer.innerHTML = '<div class="search-item">No results found.</div>';
+                } else {
+                    results.forEach(anime => {
+                        const item = document.createElement('div');
+                        item.className = 'search-item';
+                        item.innerHTML = `
+                            <img src="${anime.coverImage.large}" alt="">
+                            <span>${anime.title.romaji}</span>
+                        `;
+                        item.onclick = () => {
+                            const listToAdd = prompt(`Add "${anime.title.romaji}" to which list?`, currentList || Object.keys(animeData)[0]);
+                            if(listToAdd && Object.keys(animeData).includes(listToAdd)) {
+                                const newAnime = {
+                                    AniListID: anime.id,
+                                    Title: anime.title.romaji,
+                                    Score: anime.averageScore,
+                                    Description: anime.description,
+                                    CoverImage: anime.coverImage.large,
+                                    DateAdded: new Date().toISOString()
+                                };
+                                addAnime(newAnime, listToAdd);
+                                searchBar.value = '';
+                                searchResultsContainer.style.display = 'none';
+                            } else if (listToAdd) {
+                                alert(`List "${listToAdd}" does not exist. Please create it first.`);
+                            }
+                        };
+                        searchResultsContainer.appendChild(item);
+                    });
+                }
+                searchResultsContainer.style.display = 'block';
+            }
+
+            // --- DATA MANIPULATION (Google Sheets) ---
+            async function addAnime(anime, listName) {
+                showLoader();
+                try {
+                    const response = await fetch(SCRIPT_URL, {
+                        method: 'POST',
+                        body: JSON.stringify({ action: 'add', list: listName, data: anime })
+                    });
+                    const result = await response.json();
+                    if (result.success) {
+                        if (!animeData[listName]) animeData[listName] = [];
+                        animeData[listName].push(anime);
+                        renderAnimeGrid(listName);
+                        alert('Anime added successfully!');
+                    } else {
+                        throw new Error(result.message);
+                    }
+                } catch (error) {
+                    console.error('Error adding anime:', error);
+                    alert('Failed to add anime.');
+                } finally {
+                    hideLoader();
+                }
+            }
+            
+            async function updateAnime(anime, newListName) {
+                showLoader();
+                try {
+                    const response = await fetch(SCRIPT_URL, {
+                        method: 'POST',
+                        body: JSON.stringify({ action: 'update', oldList: currentList, newList: newListName, data: anime })
+                    });
+                    const result = await response.json();
+                    if (result.success) {
+                        // Update local state
+                        const index = animeData[currentList].findIndex(a => a.AniListID === anime.AniListID);
+                        if (index > -1) animeData[currentList].splice(index, 1);
+                        if (!animeData[newListName]) animeData[newListName] = [];
+                        animeData[newListName].push(anime);
+
+                        currentList = newListName;
+                        renderTabs();
+                        setActiveTab(currentList);
+                        renderAnimeGrid(currentList);
+                        closeModal();
+                        alert('Anime updated successfully!');
+                    } else {
+                        throw new Error(result.message);
+                    }
+                } catch (error) {
+                    console.error('Error updating anime:', error);
+                    alert('Failed to update anime.');
+                } finally {
+                    hideLoader();
+                }
+            }
+
+            async function createNewList(listName) {
+                 showLoader();
+                try {
+                    const response = await fetch(SCRIPT_URL, {
+                        method: 'POST',
+                        body: JSON.stringify({ action: 'createList', list: listName })
+                    });
+                    const result = await response.json();
+                    if (result.success) {
+                       animeData[listName] = [];
+                       renderTabs();
+                       currentList = listName;
+                       setActiveTab(currentList);
+                       renderAnimeGrid(currentList);
+                       alert(`List "${listName}" created!`);
+                    } else {
+                        throw new Error(result.message);
+                    }
+                } catch (error) {
+                    console.error('Error creating list:', error);
+                    alert('Failed to create new list.');
+                } finally {
+                    hideLoader();
+                }
+            }
+
+            // --- UTILITY FUNCTIONS ---
+            function showLoader() { loader.style.display = 'block'; }
+            function hideLoader() { loader.style.display = 'none'; }
+            function closeModal() { modalOverlay.style.display = 'none'; }
+
+            // --- EVENT LISTENERS ---
+            searchIcon.addEventListener('click', () => {
+                searchBar.classList.toggle('active');
+                searchBar.focus();
             });
 
-            if (!response.ok) throw new Error(`AniList API Error: ${response.status}`);
-            const data = await response.json();
-
-            if (data.errors) {
-              console.error("GraphQL Errors:", data.errors);
-              this.results = [];
-              return;
-            }
-
-            this.results = data.data.Page.media;
-          } catch (err) {
-            console.error("🔍 Search failed:", err.message);
-            alert("Search failed. Check console. Is internet working?");
-            this.results = [];
-          } finally {
-            this.loading = false;
-          }
-        },
-
-        async fetchExternalScores(media) {
-          this.selectedMedia.malScore = null;
-          this.selectedMedia.kitsuScore = null;
-
-          try {
-            const malRes = await fetch(`${constants.MAL_API}/anime?q=${encodeURIComponent(media.title.romaji)}&limit=1`);
-            if (malRes.ok) {
-              const malData = await malRes.json();
-              this.selectedMedia.malScore = malData.data?.[0]?.score || null;
-            }
-
-            const kitsuRes = await fetch(
-              `${constants.KITSU_API}/anime?filter[text]=${encodeURIComponent(media.title.romaji)}&page[limit]=1`,
-              { headers: { 'Accept': 'application/vnd.api+json' } }
-            );
-            if (kitsuRes.ok) {
-              const kitsuData = await kitsuRes.json();
-              const rating = kitsuData.data?.[0]?.attributes?.averageRating;
-              this.selectedMedia.kitsuScore = rating ? parseFloat(rating).toFixed(1) : null;
-            }
-          } catch (err) {
-            console.warn("External API fetch failed (rate limit?)", err);
-          }
-        },
-
-        openMediaModal(media) {
-          this.selectedMedia = { ...media };
-          this.fetchExternalScores(media);
-          this.showModal = true;
-        },
-
-        addToCurrentList() {
-          const entry = {
-            MediaId: this.selectedMedia.id,
-            Title: this.selectedMedia.title.english || this.selectedMedia.title.romaji,
-            Format: this.selectedMedia.format,
-            Status: this.tempStatus,
-            Score: this.selectedMedia.averageScore || 0,
-            Description: (this.selectedMedia.description || '').replace(/<[^>]*>/g, '').slice(0, 200),
-            DateAdded: new Date().toLocaleDateString(),
-            CoverImage: this.selectedMedia.coverImage?.extraLarge || this.selectedMedia.coverImage?.large,
-            SourceUrl: this.selectedMedia.siteUrl
-          };
-
-          const list = this.customLists.find(l => l.id === this.activeList);
-          if (list) {
-            list.items.unshift(entry);
-            this.saveToSheet(entry);
-            this.showModal = false;
-            alert(`✅ Added to ${list.name}`);
-          }
-        },
-
-        async saveToSheet(entry) {
-          const payload = {
-            userId: Alpine.store('user').name || 'default-user',
-            ...entry
-          };
-
-          try {
-            const res = await fetch(GOOGLE_SCRIPT_URL, {
-              method: 'POST',
-              body: JSON.stringify(payload)
+            searchBar.addEventListener('keyup', (e) => {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => handleSearch(e.target.value), 500);
+            });
+            
+            listTabs.addEventListener('click', (e) => {
+                if (e.target.classList.contains('tab')) {
+                    if (e.target.id === 'add-list-btn') {
+                        const newListName = prompt("Enter the name for the new list:");
+                        if (newListName && !Object.keys(animeData).includes(newListName)) {
+                           createNewList(newListName);
+                        } else if (newListName) {
+                           alert('A list with this name already exists.');
+                        }
+                    } else {
+                        const listName = e.target.dataset.list;
+                        currentList = listName;
+                        setActiveTab(listName);
+                        renderAnimeGrid(listName);
+                    }
+                }
             });
 
-            const result = await res.json();
-            if (result.error) console.error("Sheet Error:", result.error);
-          } catch (err) {
-            console.error("❌ Failed to save to Google Sheets:", err);
-            alert("Failed to sync. Check your Google Script URL.");
-          }
-        },
+            closeModalBtn.addEventListener('click', closeModal);
+            modalOverlay.addEventListener('click', (e) => {
+                if (e.target === modalOverlay) closeModal();
+            });
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && modalOverlay.style.display === 'flex') closeModal();
+            });
 
-        openCreateListModal() {
-          this.newListName = '';
-          this.showCreateListModal = true;
-        },
-
-        createCustomList() {
-          const name = this.newListName.trim();
-          if (!name) return;
-          const id = name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-          this.customLists.push({ id, name, items: [] });
-          this.activeList = id;
-          this.showCreateListModal = false;
-        },
-
-        formatScore(score) {
-          return score ? parseFloat(score).toFixed(1) : 'N/A';
-        }
-      }));
-
-      const username = localStorage.getItem('username') || prompt('Enter your username:', 'user') || 'user';
-      localStorage.setItem('username', username);
-      Alpine.store('user', { name: username });
-    });
-
-    async function loadFromSheet() {
-      try {
-        const userId = Alpine.store('user')?.name || 'default-user';
-        const res = await fetch(`${GOOGLE_SCRIPT_URL}?method=get&userId=${encodeURIComponent(userId)}`);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        if (data.error) throw new Error(data.error);
-
-        data.result?.forEach(entry => {
-          const list = Alpine.store('app').customLists.find(l => l.id === entry.Status.toLowerCase().replace(/\s+/g, ''));
-          if (list) list.items.push(entry);
+            // --- START ---
+            initialize();
         });
-      } catch (err) {
-        console.warn("⚠️ Load failed:", err.message);
-        alert("⚠️ Could not load data. Check Google Script URL and redeploy as 'Anyone'.");
-      }
-    }
-
-    document.addEventListener('alpine:initialized', () => {
-      loadFromSheet();
-    });
-  </script>
-
-  <!-- Inline Service Worker -->
-  <script>
-    const swScript = `
-      const CACHE = 'anitracker-v3';
-      self.addEventListener('install', e => {
-        self.skipWaiting();
-        e.waitUntil(caches.open(CACHE));
-      });
-      self.addEventListener('activate', e => {
-        e.waitUntil(self.clients.claim());
-      });
-      self.addEventListener('fetch', e => {
-        e.respondWith(caches.match(e.request).then(r => r || fetch(e.request)));
-      });
-    `;
-    const blob = new Blob([swScript], { type: 'application/javascript' });
-    const swUrl = URL.createObjectURL(blob);
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register(swUrl).then(() => {
-        console.log('✅ Service Worker Registered');
-      }).catch(err => {
-        console.log('❌ SW Error:', err);
-      });
-    }
-  </script>
-
+    </script>
 </body>
 </html>
