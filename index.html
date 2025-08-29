@@ -15,27 +15,20 @@
             --text-color: #e0e0e0;
             --text-muted-color: #888;
             --border-color: #333;
-            --success-color: #4caf50;
-            --error-color: #f44336;
             --card-hover-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
             --modal-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
             --border-radius: 99px; /* Pill shape */
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            line-height: 1.6;
-        }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-color); color: var(--text-color); line-height: 1.6; }
 
-        /* Custom Scrollbar Styles */
+        /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: var(--surface-color); border-radius: 10px; }
         ::-webkit-scrollbar-thumb { background: var(--primary-color); border-radius: 10px; border: 2px solid var(--surface-color); }
         ::-webkit-scrollbar-thumb:hover { background: var(--accent-color); }
 
-        /* HEADER & NAVIGATION */
+        /* HEADER */
         header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 2rem; background-color: rgba(18, 18, 18, 0.8); backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 1000; border-bottom: 1px solid var(--border-color); }
         #logo { font-size: 1.5rem; font-weight: 700; cursor: pointer; }
         #logo span { color: var(--accent-color); }
@@ -50,29 +43,20 @@
         .search-item:hover { background-color: rgba(255, 255, 255, 0.05); }
         .search-item img { width: 40px; height: 60px; object-fit: cover; border-radius: 4px; margin-right: 1rem; }
 
-        /* MAIN CONTENT & TABS */
+        /* MAIN CONTENT & CONTROLS */
         main { padding: 2rem; }
         .main-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem; }
-        #list-tabs-container { flex-grow: 1; display: flex; justify-content: center; }
+        #list-tabs-container { flex: 1; display: flex; justify-content: center; }
         #list-tabs { display: inline-flex; position: relative; background-color: var(--primary-color); padding: 5px; border-radius: var(--border-radius); }
         .tab { position: relative; z-index: 2; padding: 0.6rem 1.5rem; background: none; border: none; color: var(--text-muted-color); cursor: pointer; border-radius: var(--border-radius); font-weight: 600; transition: color 0.4s ease; }
         .tab.active { color: #000; }
         #tab-slider { position: absolute; z-index: 1; top: 5px; height: calc(100% - 10px); background-color: var(--accent-color); border-radius: var(--border-radius); transition: left 0.4s cubic-bezier(0.25, 1, 0.5, 1), width 0.4s cubic-bezier(0.25, 1, 0.5, 1); }
 
-        /* VIEW & SORT TOGGLES */
         .controls-container { display: flex; gap: 1rem; }
-        #view-toggle { display: flex; background-color: var(--primary-color); border-radius: var(--border-radius); padding: 5px; }
-        .view-btn { background: none; border: none; padding: 0.4rem; cursor: pointer; color: var(--text-muted-color); display: flex; align-items: center; justify-content: center; border-radius: var(--border-radius); transition: background-color 0.2s ease, color 0.2s ease; }
-        .view-btn.active { background-color: var(--accent-color); color: #000; }
-        .view-btn svg { width: 20px; height: 20px; }
-        
-        .custom-select-wrapper { position: relative; background-color: var(--primary-color); border-radius: var(--border-radius); }
-        .custom-select-wrapper::after { content: '▼'; font-size: 0.6rem; color: var(--text-muted-color); position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); pointer-events: none; }
-        #sort-options {
-            -webkit-appearance: none; -moz-appearance: none; appearance: none;
-            background: transparent; color: var(--text-color); border: none;
-            padding: 0.6rem 2.5rem 0.6rem 1rem; font-weight: 500; cursor: pointer;
-        }
+        .control-group { display: flex; background-color: var(--primary-color); border-radius: var(--border-radius); padding: 5px; align-items: center; }
+        .control-btn { background: none; border: none; padding: 0.4rem 0.8rem; cursor: pointer; color: var(--text-muted-color); display: flex; align-items: center; justify-content: center; border-radius: var(--border-radius); transition: background-color 0.2s ease, color 0.2s ease; font-weight: 500; }
+        .control-btn.active { background-color: var(--accent-color); color: #000; }
+        .control-btn svg { width: 20px; height: 20px; }
 
         /* ANIME GRID VIEW */
         #anime-container.grid-view { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1.5rem; }
@@ -84,7 +68,7 @@
         .card-title { font-weight: 600; font-size: 1rem; line-height: 1.2; }
         .card-score { position: absolute; top: 8px; right: 8px; background-color: rgba(0, 0, 0, 0.7); color: white; padding: 0.25rem 0.6rem; border-radius: 8px; font-weight: 700; font-size: 0.9rem; backdrop-filter: blur(5px); }
         .card-label { position: absolute; top: 8px; left: 8px; background-color: rgba(45, 48, 62, 0.8); color: var(--accent-color); padding: 0.25rem 0.6rem; border-radius: 8px; font-weight: 700; font-size: 0.8rem; backdrop-filter: blur(5px); }
-        .card-notes-tooltip { visibility: hidden; opacity: 0; position: absolute; bottom: 110%; left: 50%; transform: translateX(-50%); background-color: var(--bg-color); color: var(--text-color); padding: 0.75rem; border-radius: 8px; z-index: 10; width: 250px; text-align: left; font-size: 0.9rem; line-height: 1.5; pointer-events: none; transition: opacity 0.2s ease, visibility 0.2s ease; box-shadow: var(--modal-shadow); }
+        .card-notes-tooltip { visibility: hidden; opacity: 0; position: absolute; bottom: 110%; left: 50%; transform: translateX(-50%); background-color: var(--bg-color); color: var(--text-color); padding: 0.75rem; border-radius: 8px; z-index: 10; width: 250px; text-align: left; font-size: 0.9rem; line-height: 1.5; pointer-events: none; transition: opacity 0.2s ease, visibility 0.2s ease; box-shadow: var(--modal-shadow); white-space: pre-wrap; }
         .anime-card:hover .card-notes-tooltip { visibility: visible; opacity: 1; }
         
         /* ANIME LIST VIEW */
@@ -103,7 +87,7 @@
         @keyframes slideUpIn { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
         .modal-title { font-size: 1.5rem; margin-bottom: 1.5rem; }
         .modal-body { margin-bottom: 1.5rem; }
-        .modal-body input, .modal-body textarea { width: 100%; padding: 0.8rem; font-size: 1rem; background-color: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-color); border-radius: 8px; resize: vertical; }
+        .modal-body input, .modal-body textarea { width: 100%; padding: 0.8rem; font-size: 1rem; background-color: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-color); border-radius: 8px; resize: vertical; margin-bottom: 1rem; }
         .modal-buttons { display: flex; justify-content: flex-end; gap: 1rem; align-items: center; }
         .modal-close-btn { position: absolute; top: 1rem; right: 1.5rem; font-size: 2rem; color: white; cursor: pointer; border: none; background: none; z-index: 10; text-shadow: 0 0 5px black; }
         
@@ -121,15 +105,15 @@
         .score-item .kitsu-icon { color: #FD753E; }
         .score-item .anilist-icon { color: #3577FF; }
         .score-value { font-weight: 700; font-size: 1.1rem; }
-        #modal-custom-fields { display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1rem; }
+        #modal-notes-display { display: none; background: rgba(45, 48, 62, 0.5); border-left: 3px solid var(--accent-color); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; font-style: italic; white-space: pre-wrap; }
         #modal-description { flex-grow: 1; max-height: 150px; overflow-y: auto; line-height: 1.7; color: var(--text-muted-color); padding-right: 10px; }
-        
-        #settings-list { display: flex; flex-direction: column; gap: 1rem; max-height: 50vh; overflow-y: auto; }
-        .settings-item { display: flex; justify-content: space-between; align-items: center; background: var(--bg-color); padding: 0.75rem 1rem; border-radius: 8px; }
+        #details-modal-buttons { display: flex; justify-content: flex-end; align-items: center; gap: 1rem; margin-top: 1.5rem; }
+        #edit-details-btn { margin-right: auto; }
+        #details-modal-buttons select { -webkit-appearance: none; -moz-appearance: none; appearance: none; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 0.5rem 1rem; color: var(--text-color); }
         
         /* New Loader Style */
-        #loader { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 3000; }
-        .loader-content { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; }
+        #loader { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 3000; justify-content: center; align-items: center; }
+        .loader-content { text-align: center; }
         .loader-logo { font-size: 2rem; font-weight: 700; animation: pulse 1.8s infinite ease-in-out; }
         .loader-logo span { color: var(--accent-color); }
         .loader-spinner { width: 80px; height: 80px; border: 4px solid var(--border-color); border-top-color: var(--accent-color); border-radius: 50%; margin: 1rem auto 0 auto; animation: spin 1.2s linear infinite; }
@@ -161,16 +145,10 @@
         <div class="main-header">
             <div id="list-tabs-container"><div id="list-tabs"><div id="tab-slider"></div></div></div>
             <div class="controls-container">
-                <div class="custom-select-wrapper">
-                    <select id="sort-options">
-                        <option value="date">Date Added</option>
-                        <option value="name">Name</option>
-                        <option value="score">Score</option>
-                    </select>
-                </div>
-                <div id="view-toggle">
-                    <button class="view-btn active" id="grid-view-btn" title="Grid View" aria-label="Grid View"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg></button>
-                    <button class="view-btn" id="list-view-btn" title="List View" aria-label="List View"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg></button>
+                <div id="sort-controls" class="control-group"></div>
+                <div id="view-toggle" class="control-group">
+                    <button class="control-btn active" id="grid-view-btn" title="Grid View" aria-label="Grid View"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg></button>
+                    <button class="control-btn" id="list-view-btn" title="List View" aria-label="List View"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg></button>
                 </div>
             </div>
         </div>
@@ -186,17 +164,11 @@
                 <div id="modal-details">
                     <h2 id="modal-title"></h2>
                     <div id="modal-scores"></div>
-                    <div id="modal-custom-fields">
-                        <input type="text" id="modal-label-input" placeholder="Custom Label (e.g., Favorite, Rewatching)">
-                        <textarea id="modal-notes-input" placeholder="Your personal notes..." rows="3"></textarea>
-                    </div>
+                    <div id="modal-notes-display"></div>
                     <p id="modal-description"></p>
-                    <div class="modal-buttons">
-                        <div id="modal-actions">
-                            <label for="list-selector">Status:</label>
-                            <select id="list-selector"></select>
-                            <button id="save-btn" class="primary-btn">Save</button>
-                        </div>
+                    <div id="details-modal-buttons">
+                        <button id="edit-details-btn" class="secondary-btn">Edit Details</button>
+                        <select id="list-selector"></select>
                         <button class="icon-btn danger-btn" id="modal-delete-btn" title="Delete Anime" aria-label="Delete Anime"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg></button>
                     </div>
                 </div>
@@ -204,6 +176,17 @@
         </div>
     </div>
     
+    <div id="action-modal-overlay" class="modal-overlay">
+        <div id="action-modal-content" class="modal-content">
+            <h3 class="modal-title" id="action-modal-title"></h3>
+            <div class="modal-body" id="action-modal-body"></div>
+            <div class="modal-buttons">
+                <button class="secondary-btn" data-action="close">Cancel</button>
+                <button class="primary-btn" id="action-confirm-btn">Confirm</button>
+            </div>
+        </div>
+    </div>
+
     <div id="settings-modal-overlay" class="modal-overlay">
         <div id="settings-modal-content" class="modal-content">
             <button class="modal-close-btn">&times;</button>
@@ -228,21 +211,22 @@
             const loader = document.getElementById('loader');
             const animeContainer = document.getElementById('anime-container');
             const listTabs = document.getElementById('list-tabs');
-            const sortOptions = document.getElementById('sort-options');
+            const sortControls = document.getElementById('sort-controls');
             const searchIcon = document.getElementById('search-icon');
             const searchBar = document.getElementById('search-bar');
             const searchResultsContainer = document.getElementById('search-results');
             const detailsModalOverlay = document.getElementById('details-modal-overlay');
+            const actionModalOverlay = document.getElementById('action-modal-overlay');
+            const settingsModalOverlay = document.getElementById('settings-modal-overlay');
 
             const modalBanner = document.getElementById('modal-banner');
             const modalCover = document.getElementById('modal-cover');
             const modalTitle = document.getElementById('modal-title');
             const modalScores = document.getElementById('modal-scores');
-            const modalLabelInput = document.getElementById('modal-label-input');
-            const modalNotesInput = document.getElementById('modal-notes-input');
+            const modalNotesDisplay = document.getElementById('modal-notes-display');
             const modalDescription = document.getElementById('modal-description');
             const listSelector = document.getElementById('list-selector');
-            const saveBtn = document.getElementById('save-btn');
+            const editDetailsBtn = document.getElementById('edit-details-btn');
             const modalDeleteBtn = document.getElementById('modal-delete-btn');
 
             let allAnime = [];
@@ -284,21 +268,15 @@
                 const grouped = {};
                 categories.forEach(cat => grouped[cat] = []);
                 allAnime.forEach(anime => {
-                    if (grouped[anime.Category]) {
-                        grouped[anime.Category].push(anime);
-                    }
+                    if (grouped[anime.Category]) grouped[anime.Category].push(anime);
                 });
 
                 for (const category in grouped) {
                     grouped[category].sort((a, b) => {
                         switch (currentSort) {
-                            case 'name':
-                                return a.Title.localeCompare(b.Title);
-                            case 'score':
-                                return (b.Score || 0) - (a.Score || 0);
-                            case 'date':
-                            default:
-                                return new Date(b.DateAdded) - new Date(a.DateAdded);
+                            case 'name': return a.Title.localeCompare(b.Title);
+                            case 'score': return (b.Score || 0) - (a.Score || 0);
+                            case 'date': default: return new Date(b.DateAdded) - new Date(a.DateAdded);
                         }
                     });
                 }
@@ -345,7 +323,6 @@
                 animeInList.forEach(anime => {
                     const card = document.createElement('div');
                     card.className = 'anime-card';
-                    card.dataset.notes = anime.Notes || '';
                     const labelHtml = anime.Label ? `<div class="card-label">${anime.Label}</div>` : '';
                     const notesTooltipHtml = anime.Notes ? `<div class="card-notes-tooltip">${anime.Notes.replace(/\n/g, '<br>')}</div>` : '';
                     card.innerHTML = `<img src="${anime.CoverImage}" alt="${anime.Title}">${labelHtml}<div class="card-score">${anime.Score || 'N/A'}</div><div class="card-overlay"><div class="card-title">${anime.Title}</div></div>${notesTooltipHtml}`;
@@ -373,10 +350,15 @@
 
             async function openDetailsModal(anime, listName) {
                 modalTitle.textContent = anime.Title;
+                if(anime.Notes) {
+                    modalNotesDisplay.textContent = anime.Notes;
+                    modalNotesDisplay.style.display = 'block';
+                } else {
+                    modalNotesDisplay.style.display = 'none';
+                }
                 modalDescription.innerHTML = anime.Description ? anime.Description.replace(/\n/g, '<br>') : 'No description available.';
-                modalLabelInput.value = anime.Label || '';
-                modalNotesInput.value = anime.Notes || '';
                 modalCover.src = anime.CoverImage;
+                
                 if (anime.BannerImage) {
                     modalBanner.style.backgroundImage = `url('${anime.BannerImage}')`;
                     modalBanner.style.display = 'block';
@@ -385,37 +367,72 @@
                     modalBanner.style.display = 'none';
                     modalCover.classList.add('no-banner');
                 }
+                
                 listSelector.innerHTML = categories.map(name => `<option value="${name}" ${name === listName ? 'selected' : ''}>${name}</option>`).join('');
-                saveBtn.onclick = () => saveAnimeDetails(anime);
+                listSelector.onchange = () => saveAnimeDetails(anime, true);
+                
+                editDetailsBtn.onclick = () => openEditDetailsModal(anime);
                 modalDeleteBtn.onclick = () => deleteAnime(anime);
+
                 detailsModalOverlay.style.display = 'flex';
                 fetchAndDisplayScores(anime.Title, anime.Score);
             }
 
             async function fetchAndDisplayScores(title, aniListScore) {
-                modalScores.innerHTML = `<div class="spinner"></div>`;
+                modalScores.innerHTML = `<div class="spinner" style="width:20px; height:20px; border-width: 2px; margin: 0;"></div>`;
                 const [malScore, kitsuScore] = await Promise.all([ getMalScore(title), getKitsuScore(title) ]);
                 const anilistIcon = `<svg class="anilist-icon" role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18.89 23.99l-5.91-9.15a.37.37 0 00-.66 0l-5.91 9.15H.05L10.12 7.7a1.69 1.69 0 012.87 0L23.95 24h-5.06zM11.56 0a5.35 5.35 0 11-3.79 1.57A5.32 5.32 0 0111.56 0z" fill="currentColor"/></svg>`;
                 const malIcon = `<svg class="mal-icon" role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M22.441 0H1.559C.697 0 0 .697 0 1.559v20.882C0 23.303.697 24 1.559 24h20.882c.862 0 1.559-.697 1.559-1.559V1.559C24 .697 23.303 0 22.441 0zM7.106 18.242H4.953V8.878h2.153v9.364zm5.54-5.18h-2.122V8.878h2.028s2.158.064 2.158 2.223c0 2.158-2.063 2.158-2.063 2.158v.005zm7.398 5.18h-2.152V8.878h2.152v9.364z" fill="currentColor"/></svg>`;
                 const kitsuIcon = `<svg class="kitsu-icon" role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M22.53 2.25H1.47A1.47 1.47 0 000 3.72v16.56A1.47 1.47 0 001.47 21.75h21.06A1.47 1.47 0 0024 20.28V3.72A1.47 1.47 0 0022.53 2.25zM7.89 12.38a.39.39 0 01-.78 0L5.34 9.15a.39.39 0 01.33-.57h4.62a.39.39 0 01.33.57zm8.22 0a.39.39 0 01-.78 0l-1.77-3.23a.39.39 0 01.33-.57h4.62a.39.39 0 01.33.57z" fill="currentColor"/></svg>`;
-                modalScores.innerHTML = `
-                    <div class="score-item">${anilistIcon}<span class="score-value">${(aniListScore/10).toFixed(1) || 'N/A'}</span></div>
-                    <div class="score-item">${malIcon}<span class="score-value">${malScore}</span></div>
-                    <div class="score-item">${kitsuIcon}<span class="score-value">${kitsuScore}</span></div>
-                `;
+                modalScores.innerHTML = `<div class="score-item">${anilistIcon}<span class="score-value">${(aniListScore/10).toFixed(1) || 'N/A'}</span></div><div class="score-item">${malIcon}<span class="score-value">${malScore}</span></div><div class="score-item">${kitsuIcon}<span class="score-value">${kitsuScore}</span></div>`;
             }
-
             async function getMalScore(title) { try { const res = await fetch(`${API.MAL}/anime?q=${encodeURIComponent(title)}&limit=1`); const data = await res.json(); return data.data[0]?.score?.toFixed(1) || 'N/A'; } catch (e) { return 'N/A'; } }
             async function getKitsuScore(title) { try { const res = await fetch(`${API.KITSU}/anime?filter[text]=${encodeURIComponent(title)}&page[limit]=1`); const data = await res.json(); return data.data[0]?.attributes?.averageRating ? (data.data[0].attributes.averageRating / 10).toFixed(1) : 'N/A'; } catch (e) { return 'N/A'; } }
 
-            function saveAnimeDetails(anime) {
-                const newCategory = listSelector.value;
-                const newLabel = modalLabelInput.value.trim();
-                const newNotes = modalNotesInput.value.trim();
+            function openEditDetailsModal(anime) {
+                actionModalOverlay.style.display = 'flex';
+                document.getElementById('action-modal-title').textContent = "Edit Details";
+                document.getElementById('action-modal-body').innerHTML = `
+                    <input type="text" id="edit-label-input" placeholder="Custom Label..." value="${anime.Label || ''}">
+                    <textarea id="edit-notes-input" placeholder="Your notes..." rows="4">${anime.Notes || ''}</textarea>
+                `;
+                document.getElementById('action-confirm-btn').onclick = () => {
+                    saveAnimeDetails(anime);
+                    closeActionModal();
+                };
+            }
+
+            function saveAnimeDetails(anime, categoryOnly = false) {
                 const animeToUpdate = allAnime.find(a => a.AniListID === anime.AniListID);
                 const oldData = { Category: animeToUpdate.Category, Label: animeToUpdate.Label, Notes: animeToUpdate.Notes };
+                
+                const newCategory = listSelector.value;
+                let newLabel, newNotes;
+
+                if (categoryOnly) {
+                    newLabel = oldData.Label;
+                    newNotes = oldData.Notes;
+                } else {
+                    newLabel = document.getElementById('edit-label-input').value.trim();
+                    newNotes = document.getElementById('edit-notes-input').value.trim();
+                }
+
                 animeToUpdate.Category = newCategory; animeToUpdate.Label = newLabel; animeToUpdate.Notes = newNotes;
-                renderCurrentView(); closeDetailsModal(); showNotification('Anime details saved!', 'success');
+                
+                renderCurrentView();
+                if (!categoryOnly) {
+                    closeDetailsModal();
+                } else {
+                    // if only category changed, update the notes display in the open modal
+                    if(newNotes) {
+                        modalNotesDisplay.textContent = newNotes;
+                        modalNotesDisplay.style.display = 'block';
+                    } else {
+                        modalNotesDisplay.style.display = 'none';
+                    }
+                }
+                showNotification('Anime details saved!', 'success');
+
                 fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'updateDetails', animeId: anime.AniListID, newCategory, newLabel, newNotes }) })
                 .catch(err => {
                     animeToUpdate.Category = oldData.Category; animeToUpdate.Label = oldData.Label; animeToUpdate.Notes = oldData.Notes;
@@ -449,16 +466,69 @@
                 });
             }
 
-            function createNewList(listName) { /* Unchanged */ }
-            function renameList(oldName, newName) { /* Unchanged */ }
-            function deleteList(listName) { /* Unchanged */ }
+            function createNewList(listName) {
+                categories.push(listName);
+                renderTabs(); openSettingsModal();
+                showNotification(`List "${listName}" created!`, 'success');
+                fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'createList', listName }) })
+                .catch(err => {
+                    categories = categories.filter(c => c !== listName);
+                    renderTabs(); openSettingsModal();
+                    showNotification('Failed to create list. Reverting.', 'error');
+                });
+            }
+            function renameList(oldName, newName) {
+                if (!newName || newName === oldName) return;
+                if (categories.includes(newName)) {
+                    showNotification(`List "${newName}" already exists.`, 'error');
+                    return;
+                }
+                const originalCategories = [...categories];
+                const originalAnime = JSON.parse(JSON.stringify(allAnime));
+                categories = categories.map(c => c === oldName ? newName : c);
+                allAnime.forEach(a => { if (a.Category === oldName) a.Category = newName; });
+                if (currentList === oldName) currentList = newName;
+                renderTabs(); openSettingsModal();
+                setTimeout(() => updateActiveTab(document.querySelector(`.tab[data-list="${currentList}"]`)), 10);
+                showNotification(`Renamed "${oldName}" to "${newName}"`, 'success');
+                fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'renameList', oldName, newName }) })
+                .catch(err => {
+                    categories = originalCategories;
+                    allAnime = originalAnime;
+                    if (currentList === newName) currentList = oldName;
+                    renderTabs(); openSettingsModal();
+                    setTimeout(() => updateActiveTab(document.querySelector(`.tab[data-list="${currentList}"]`)), 10);
+                    showNotification('Failed to rename list. Reverting.', 'error');
+                });
+            }
+            function deleteList(listName) {
+                const animeInListCount = allAnime.filter(a => a.Category === listName).length;
+                let confirmMsg = `Are you sure you want to delete the category "${listName}"?`;
+                if (animeInListCount > 0) confirmMsg += `\n\nThis will also PERMANENTLY DELETE ${animeInListCount} anime in this list. This action cannot be undone.`;
+                if (!confirm(confirmMsg)) return;
+                const originalAnime = [...allAnime];
+                const originalCategories = [...categories];
+                allAnime = allAnime.filter(a => a.Category !== listName);
+                categories = categories.filter(c => c !== listName);
+                if (currentList === listName) currentList = categories[0] || '';
+                renderTabs(); openSettingsModal(); renderCurrentView();
+                setTimeout(() => updateActiveTab(document.querySelector(`.tab[data-list="${currentList}"]`)), 10);
+                showNotification(`Deleted list "${listName}"`, 'success');
+                fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'deleteList', listName }) })
+                .catch(err => {
+                    allAnime = originalAnime;
+                    categories = originalCategories;
+                    renderTabs(); openSettingsModal(); renderCurrentView();
+                    showNotification(`Error deleting list. Reverting.`, 'error');
+                });
+            }
             
             function setupViewToggle() {
                 const gridBtn = document.getElementById('grid-view-btn');
                 const listBtn = document.getElementById('list-view-btn');
                 function setView(view) {
                     currentView = view; localStorage.setItem('viewPreference', view);
-                    animeContainer.className = `${view}-view`;
+                    animeContainer.className = `control-btn ${view}-view`;
                     gridBtn.classList.toggle('active', view === 'grid');
                     listBtn.classList.toggle('active', view === 'list');
                     renderCurrentView();
@@ -467,19 +537,30 @@
                 listBtn.addEventListener('click', () => setView('list'));
                 setView(currentView);
             }
-
             function setupSortToggle() {
-                sortOptions.value = currentSort;
-                sortOptions.addEventListener('change', (e) => {
-                    currentSort = e.target.value;
-                    localStorage.setItem('sortPreference', currentSort);
-                    renderCurrentView();
-                });
+                const sorts = { date: 'Date Added', name: 'Name', score: 'Score' };
+                sortControls.innerHTML = '';
+                for (const key in sorts) {
+                    const btn = document.createElement('button');
+                    btn.className = 'control-btn';
+                    btn.dataset.sort = key;
+                    btn.textContent = sorts[key];
+                    if (key === currentSort) btn.classList.add('active');
+                    btn.addEventListener('click', () => {
+                        currentSort = key;
+                        localStorage.setItem('sortPreference', currentSort);
+                        document.querySelectorAll('#sort-controls .control-btn').forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                        renderCurrentView();
+                    });
+                    sortControls.appendChild(btn);
+                }
             }
 
-            function showLoader() { loader.style.display = 'block'; }
+            function showLoader() { loader.style.display = 'flex'; }
             function hideLoader() { loader.style.display = 'none'; }
             function closeDetailsModal() { detailsModalOverlay.style.display = 'none'; }
+            function closeActionModal() { actionModalOverlay.style.display = 'none'; }
             
             function showNotification(message, type = 'success') {
                 const container = document.getElementById('notification-container');
@@ -490,29 +571,47 @@
                 setTimeout(() => { notification.remove(); }, 3000);
             }
 
-            searchIcon.addEventListener('click', () => searchBar.classList.toggle('active') && searchBar.focus());
-            document.getElementById('settings-btn').addEventListener('click', openSettingsModal);
-            listTabs.addEventListener('click', e => {
-                if (e.target.classList.contains('tab')) {
-                    updateActiveTab(e.target);
-                    renderCurrentView();
+            function openSettingsModal() {
+                const settingsModalOverlay = document.getElementById('settings-modal-overlay');
+                const settingsList = document.getElementById('settings-list');
+                settingsList.innerHTML = '';
+                categories.forEach(listName => {
+                    const item = document.createElement('div');
+                    item.className = 'settings-item';
+                    item.innerHTML = `<span>${listName}</span><div class="settings-item-actions"><button class="icon-btn rename-btn" data-list="${listName}">✏️</button><button class="icon-btn danger-btn delete-btn" data-list="${listName}">🗑️</button></div>`;
+                    settingsList.appendChild(item);
+                });
+                settingsModalOverlay.style.display = 'flex';
+            }
+            document.getElementById('settings-modal-overlay').addEventListener('click', e => {
+                const target = e.target.closest('.icon-btn, #settings-add-new-btn, .modal-close-btn, [data-action="close"]');
+                if (!target && e.target !== e.currentTarget) return; // Ignore clicks inside content
+                
+                if (target?.classList.contains('rename-btn')) {
+                    const oldName = target.dataset.list;
+                    const newName = prompt(`Rename list "${oldName}" to:`, oldName);
+                    renameList(oldName, newName);
+                }
+                else if(target?.classList.contains('delete-btn')) {
+                    const listName = target.dataset.list;
+                    deleteList(listName);
+                }
+                else if (target?.id === 'settings-add-new-btn') {
+                    const newListName = prompt("Enter name for the new list:");
+                    if (newListName && !categories.includes(newListName)) createNewList(newListName);
+                    else if (newListName) showNotification('A list with this name already exists.', 'error');
+                }
+                else if (target === e.currentTarget || target?.classList.contains('modal-close-btn') || target?.dataset.action === "close") {
+                    e.currentTarget.style.display = 'none';
                 }
             });
-            
-            function openSettingsModal() { /* Unchanged */ }
-            document.getElementById('settings-modal-overlay').addEventListener('click', e => {
-                const target = e.target;
-                if(target.classList.contains('rename-btn')) { /* Unchanged */ }
-                if(target.classList.contains('delete-btn')) { /* Unchanged */ }
-                if (target.id === 'settings-add-new-btn') { /* Unchanged */ }
-            });
 
+            searchIcon.addEventListener('click', () => searchBar.classList.toggle('active') && searchBar.focus());
+            document.getElementById('settings-btn').addEventListener('click', openSettingsModal);
+            listTabs.addEventListener('click', e => { if (e.target.classList.contains('tab')) { updateActiveTab(e.target); renderCurrentView(); } });
+            
             document.querySelectorAll('.modal-overlay').forEach(overlay => {
-                overlay.addEventListener('click', e => {
-                    if (e.target === overlay || e.target.closest('.modal-close-btn') || (e.target.closest('.modal-buttons') && e.target.dataset.action === 'close')) {
-                        overlay.style.display = 'none';
-                    }
-                });
+                overlay.addEventListener('click', e => { if (e.target === overlay || e.target.closest('.modal-close-btn') || (e.target.closest('.modal-buttons') && e.target.dataset.action === 'close')) overlay.style.display = 'none'; });
             });
             document.addEventListener('keydown', e => { if (e.key === 'Escape') document.querySelectorAll('.modal-overlay').forEach(o => o.style.display = 'none'); });
             
