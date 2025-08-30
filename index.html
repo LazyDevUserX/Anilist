@@ -413,6 +413,7 @@
 
             function saveAnimeDetails(anime, categoryOnly = false) {
                 const animeToUpdate = allAnime.find(a => a.AniListID === anime.AniListID);
+                if (!animeToUpdate) return;
                 const oldData = { Category: animeToUpdate.Category, Label: animeToUpdate.Label, Notes: animeToUpdate.Notes };
                 
                 const newCategory = listSelector.value;
@@ -569,7 +570,6 @@
             }
 
             function openSettingsModal() {
-                const settingsModalOverlay = document.getElementById('settings-modal-overlay');
                 const settingsList = settingsModalOverlay.querySelector('#settings-list');
                 settingsList.innerHTML = '';
                 categories.forEach(listName => {
@@ -580,11 +580,10 @@
                 });
                 settingsModalOverlay.style.display = 'flex';
             }
-
-            document.getElementById('settings-modal-overlay').addEventListener('click', e => {
+            
+            settingsModalOverlay.addEventListener('click', e => {
                 const target = e.target.closest('.icon-btn, #settings-add-new-btn, .modal-close-btn, [data-action="close"]');
-                const overlay = document.getElementById('settings-modal-overlay');
-                if (!target && e.target !== overlay) return;
+                if (!target && e.target !== settingsModalOverlay) return;
                 
                 if (target?.classList.contains('rename-btn')) {
                     const oldName = target.dataset.list;
@@ -600,8 +599,8 @@
                     if (newListName && !categories.includes(newListName)) createNewList(newListName);
                     else if (newListName) showNotification('A list with this name already exists.', 'error');
                 }
-                else if (target === overlay || target?.closest('.modal-close-btn') || target?.dataset.action === "close") {
-                    overlay.style.display = 'none';
+                 else if (target === settingsModalOverlay || target?.closest('.modal-close-btn') || target?.dataset.action === "close") {
+                    settingsModalOverlay.style.display = 'none';
                 }
             });
 
