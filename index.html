@@ -256,13 +256,21 @@
                 KITSU: 'https://kitsu.io/api/edge',
 
                 async gasFetch(options = {}) {
-                    const url = options.params ? `${SCRIPT_URL}?${new URLSearchParams(options.params)}` : SCRIPT_URL;
-                    const response = await fetch(url, {
-                        method: options.method || 'GET',
-                        body: options.body ? JSON.stringify(options.body) : null,
-                        headers: { 'Content-Type': 'application/json' },
-                    });
-                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    const method = options.method || 'GET';
+                    const fetchOptions = { method };
+
+                    if (method === 'POST') {
+                        fetchOptions.body = JSON.stringify(options.body);
+                        // No Content-Type header needed for this specific Apps Script setup
+                        // It defaults to text/plain, which Apps Script handles correctly.
+                    }
+                    
+                    const response = await fetch(SCRIPT_URL, fetchOptions);
+
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
+                    }
                     return response.json();
                 },
 
