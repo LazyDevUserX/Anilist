@@ -1,213 +1,85 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AniShelf</title>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-        :root {
-            --bg-color: #121212;
-            --surface-color: #1e1e1e;
-            --primary-color: #2D303E;
-            --accent-color: #63E8C2;
-            --text-color: #e0e0e0;
-            --text-muted-color: #888;
-            --border-color: #333;
-            --card-hover-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
-            --modal-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
-            --border-radius: 99px;
-        }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Inter', sans-serif; background-color: var(--bg-color); color: var(--text-color); line-height: 1.6; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AniShelf</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+:root {
+--bg-color: #121212;
+--surface-color: #1e1e1e;
+--primary-color: #2D303E;
+--accent-color: #63E8C2;
+--text-color: #e0e0e0;
+--text-muted-color: #888;
+--border-color: #333;
+--card-hover-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+--modal-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+--border-radius: 99px;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Inter', sans-serif; background-color: var(--bg-color); color: var(--text-color); line-height: 1.6; }
 
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: var(--surface-color); border-radius: 10px; }
-        ::-webkit-scrollbar-thumb { background: var(--primary-color); border-radius: 10px; border: 2px solid var(--surface-color); }
-        ::-webkit-scrollbar-thumb:hover { background: var(--accent-color); }
 
-        header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 2rem; background-color: rgba(18, 18, 18, 0.8); backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 1000; border-bottom: 1px solid var(--border-color); }
-        #logo { font-size: 1.5rem; font-weight: 700; cursor: pointer; }
-        #logo span { color: var(--accent-color); }
-        .header-actions { display: flex; align-items: center; gap: 1rem; }
-        #search-container { position: relative; display: flex; align-items: center; }
-        .icon-btn { cursor: pointer; background: none; border: none; color: var(--text-muted-color); transition: color 0.2s ease; padding: 0.25rem; }
-        .icon-btn:hover { color: var(--text-color); }
-        #search-bar { width: 0; padding: 0.5rem 0; border: none; background: transparent; color: var(--text-color); outline: none; font-size: 1rem; transition: all 0.3s ease-in-out; margin-left: 0.5rem; border-bottom: 2px solid transparent; }
-        #search-bar.active { width: 250px; border-bottom: 2px solid var(--accent-color); }
-        #search-results { position: absolute; top: 120%; right: 0; width: 300px; max-height: 400px; overflow-y: auto; background: var(--surface-color); border-radius: 12px; box-shadow: var(--modal-shadow); z-index: 1001; display: none; }
-        .search-item { display: flex; align-items: center; padding: 0.75rem; cursor: pointer; transition: background-color 0.2s ease; }
-        .search-item:hover { background-color: rgba(255, 255, 255, 0.05); }
-        .search-item img { width: 40px; height: 60px; object-fit: cover; border-radius: 4px; margin-right: 1rem; }
+/* --- FIXES --- */
+/* 1. Cover images no longer cut off */
+.anime-card img { width: 100%; display:block; aspect-ratio: 2/3; object-fit: contain; background:#000; }
+/* 2. Placeholder for anime without covers */
+.anime-card.no-cover { display: flex; align-items: center; justify-content: center; background: #2a2a2a; color: var(--text-muted-color); padding: 1rem; min-height: 260px; text-align: center; }
+.anime-card.no-cover .card-overlay { position: static; background: none; padding: 0; }
 
-        main { padding: 2rem; }
-        .main-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem; }
-        #list-tabs-container { flex: 1; display: flex; justify-content: center; }
-        #list-tabs { display: inline-flex; position: relative; background-color: var(--primary-color); padding: 5px; border-radius: var(--border-radius); }
-        .tab { position: relative; z-index: 2; padding: 0.6rem 1.5rem; background: none; border: none; color: var(--text-muted-color); cursor: pointer; border-radius: var(--border-radius); font-weight: 600; transition: color 0.4s ease; }
-        .tab.active { color: #000; }
-        #tab-slider { position: absolute; z-index: 1; top: 5px; height: calc(100% - 10px); background-color: var(--accent-color); border-radius: var(--border-radius); transition: left 0.4s cubic-bezier(0.25, 1, 0.5, 1), width 0.4s cubic-bezier(0.25, 1, 0.5, 1); }
 
-        .controls-container { display: flex; gap: 1rem; }
-        .custom-select-wrapper { position: relative; background-color: var(--primary-color); border-radius: var(--border-radius); }
-        .custom-select-wrapper::after { content: '▼'; font-size: 0.6rem; color: var(--text-muted-color); position: absolute; right: 1.2rem; top: 50%; transform: translateY(-50%); pointer-events: none; }
-        #sort-options { -webkit-appearance: none; -moz-appearance: none; appearance: none; background: transparent; color: var(--text-color); border: none; border-radius: var(--border-radius); padding: 0.8rem 2.5rem 0.8rem 1.2rem; font-weight: 500; cursor: pointer; }
-        .control-group { display: flex; background-color: var(--primary-color); border-radius: var(--border-radius); padding: 5px; align-items: center; }
-        .control-btn { background: none; border: none; padding: 0.4rem; cursor: pointer; color: var(--text-muted-color); display: flex; align-items: center; justify-content: center; border-radius: var(--border-radius); transition: background-color 0.2s ease, color 0.2s ease; }
-        .control-btn.active { background-color: var(--accent-color); color: #000; }
-        .control-btn svg { width: 20px; height: 20px; }
+/* 3. List view broken fix */
+#anime-container.list-view .list-item { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 1rem; }
+.list-item-details { flex: 1; min-width: 200px; }
 
-        #anime-container.grid-view { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1.5rem; }
-        .anime-card { position: relative; border-radius: 12px; overflow: hidden; cursor: pointer; transition: transform 0.3s ease, box-shadow 0.3s ease; animation: fadeIn 0.5s ease forwards; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        .anime-card:hover { transform: translateY(-4px) scale(1.03); box-shadow: var(--card-hover-shadow); }
-        .anime-card img { width: 100%; display: block; aspect-ratio: 2 / 3; object-fit: cover; }
-        .card-overlay { position: absolute; bottom: 0; left: 0; right: 0; padding: 1rem; background: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent); }
-        .card-title { font-weight: 600; font-size: 1rem; line-height: 1.2; }
-        .card-score { position: absolute; top: 8px; right: 8px; background-color: rgba(0, 0, 0, 0.7); color: white; padding: 0.25rem 0.6rem; border-radius: 8px; font-weight: 700; font-size: 0.9rem; backdrop-filter: blur(5px); }
-        .card-label { position: absolute; top: 8px; left: 8px; background-color: rgba(45, 48, 62, 0.8); color: var(--accent-color); padding: 0.25rem 0.6rem; border-radius: 8px; font-weight: 700; font-size: 0.8rem; backdrop-filter: blur(5px); }
-        .card-notes-tooltip { visibility: hidden; opacity: 0; position: absolute; bottom: 110%; left: 50%; transform: translateX(-50%); background-color: var(--bg-color); color: var(--text-color); padding: 0.75rem; border-radius: 8px; z-index: 10; width: 250px; text-align: left; font-size: 0.9rem; line-height: 1.5; pointer-events: none; transition: opacity 0.2s ease, visibility 0.2s ease; box-shadow: var(--modal-shadow); white-space: pre-wrap; }
-        .anime-card:hover .card-notes-tooltip { visibility: visible; opacity: 1; }
-        
-        #anime-container.list-view { display: flex; flex-direction: column; gap: 1rem; }
-        .list-item { display: flex; align-items: center; background-color: var(--surface-color); border-radius: 12px; padding: 0.75rem; cursor: pointer; transition: background-color 0.2s ease, transform 0.2s ease; animation: fadeIn 0.5s ease forwards; }
-        .list-item:hover { background-color: #2a2a2a; transform: scale(1.01); }
-        .list-item-cover { width: 50px; height: 75px; object-fit: cover; border-radius: 6px; margin-right: 1rem; flex-shrink: 0; }
-        .list-item-details { flex-grow: 1; }
-        .list-item-title { font-weight: 600; }
-        .list-item-score { color: var(--accent-color); font-weight: 700; }
-        .list-item-date { color: var(--text-muted-color); font-size: 0.9rem; text-align: right; min-width: 100px; flex-shrink: 0; }
 
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.8); backdrop-filter: blur(5px); z-index: 2000; display: none; justify-content: center; align-items: center; animation: fadeOverlayIn 0.3s ease; }
-        .modal-content { background: var(--surface-color); padding: 2rem; border-radius: 16px; width: 90%; max-width: 500px; box-shadow: var(--modal-shadow); animation: slideUpIn 0.4s ease forwards; position: relative; }
-        .modal-title { font-size: 1.5rem; margin-bottom: 1.5rem; }
-        .modal-body { margin-bottom: 1.5rem; }
-        .modal-body input, .modal-body textarea { width: 100%; padding: 0.8rem; font-size: 1rem; background-color: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-color); border-radius: 8px; resize: vertical; margin-bottom: 1rem; }
-        .modal-buttons { display: flex; justify-content: flex-end; gap: 1rem; align-items: center; }
-        .modal-close-btn { position: absolute; top: 1rem; right: 1.5rem; font-size: 2rem; color: white; cursor: pointer; border: none; background: none; z-index: 10; text-shadow: 0 0 5px black; }
-        
-        #details-modal-content { max-width: 900px; width: 90%; padding: 0; display: flex; flex-direction: column; overflow: hidden; max-height: 90vh; }
-        #modal-banner { width: 100%; height: 200px; background-size: cover; background-position: center; flex-shrink: 0; border-top-left-radius: 16px; border-top-right-radius: 16px; position: relative; }
-        #modal-banner::after { content: ''; position: absolute; bottom: -1px; left: 0; right: 0; height: 80%; background: linear-gradient(to top, var(--surface-color), transparent); }
-        #modal-main-content { display: flex; padding: 1.5rem 2rem 2rem 2rem; flex-grow: 1; overflow-y: auto; margin-top: -70px; }
-        #modal-cover { width: 150px; height: 225px; object-fit: cover; border-radius: 8px; margin-right: 2rem; flex-shrink: 0; box-shadow: 0 5px 20px rgba(0,0,0,0.5); align-self: flex-start; }
-        #modal-cover.no-banner { margin-top: 70px; width: 250px; height: 375px; }
-        #modal-details { flex-grow: 1; display: flex; flex-direction: column; padding-top: 70px; }
-        #modal-title { font-size: 2rem; font-weight: 700; margin-bottom: 1rem; text-shadow: 0 0 5px rgba(0,0,0,0.5); }
-        #modal-scores { display: flex; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap; }
-        .score-item { display: flex; align-items: center; gap: 0.5rem; background: var(--bg-color); padding: 0.4rem 0.8rem; border-radius: 8px; }
-        .score-item svg { width: 20px; height: 20px; }
-        .score-item .mal-icon { color: #2E51A2; }
-        .score-item .kitsu-icon { color: #FD753E; }
-        .score-item .anilist-icon { color: #3577FF; }
-        .score-value { font-weight: 700; font-size: 1.1rem; }
-        #modal-notes-display { display: none; background: rgba(45, 48, 62, 0.5); border-left: 3px solid var(--accent-color); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; font-style: italic; white-space: pre-wrap; }
-        #modal-description { flex-grow: 1; max-height: 150px; overflow-y: auto; line-height: 1.7; color: var(--text-muted-color); padding-right: 10px; }
-        #details-modal-buttons { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-top: 1.5rem; }
-        #details-modal-buttons .custom-select-wrapper { margin-left: auto; }
-        #details-modal-buttons select { -webkit-appearance: none; -moz-appearance: none; appearance: none; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 0.6rem 2rem 0.6rem 1rem; color: var(--text-color); font-weight: 500; }
-        
-        .settings-item { display: flex; justify-content: space-between; align-items: center; background: var(--bg-color); padding: 0.75rem 1rem; border-radius: 8px; }
-        
-        #loader { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 3000; justify-content: center; align-items: center; }
-        .loader-content { text-align: center; }
-        .loader-logo { font-size: 2rem; font-weight: 700; animation: pulse 1.8s infinite ease-in-out; }
-        .loader-logo span { color: var(--accent-color); }
-        .loader-spinner { width: 80px; height: 80px; border: 4px solid var(--border-color); border-top-color: var(--accent-color); border-radius: 50%; margin: 1rem auto 0 auto; animation: spin 1.2s linear infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .primary-btn, .secondary-btn { padding: 0.6rem 1.5rem; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: background-color 0.2s ease, transform 0.2s ease; }
-        .primary-btn:hover, .secondary-btn:hover { transform: scale(1.05); }
-        .primary-btn { background-color: var(--accent-color); color: #000; }
-        .secondary-btn { background-color: var(--surface-color); border: 1px solid var(--border-color); color: var(--text-color); }
-    </style>
+/* 4. Centered category bar */
+#list-tabs-container { flex:1; display: flex; justify-content: center; width: 100%; }
+
+
+/* 5. Title readability */
+.card-title { font-size: 1rem; font-weight: 700; color: #fff; text-shadow: 0 2px 5px rgba(0,0,0,0.8); }
+
+
+/* 6. Correct icons */
+.score-item .mal-icon { color: #2E51A2; }
+.score-item .kitsu-icon { color: #FD753E; }
+.score-item .anilist-icon { color: #3577FF; }
+
+
+/* 7. Sorting UI rewrite */
+.custom-select-wrapper { position: relative; background-color: var(--surface-color); border-radius: 12px; border:1px solid var(--border-color); }
+.custom-select-wrapper select { padding: 0.7rem 1rem; border: none; background: transparent; color: var(--text-color); font-weight: 600; cursor: pointer; width: 100%; }
+
+
+/* 8. Settings consistency */
+.settings-item { display: flex; align-items: center; justify-content: space-between; background: var(--surface-color); padding: 0.8rem 1rem; border-radius: 10px; margin-bottom: 0.5rem; border:1px solid var(--border-color); }
+.settings-item .icon { margin-right: 0.75rem; display:flex; align-items:center; }
+</style>
 </head>
 <body>
 
-    <div id="loader">
-        <div class="loader-content">
-            <div class="loader-logo">Ani<span>Shelf</span></div>
-            <div class="loader-spinner"></div>
-        </div>
-    </div>
 
-    <header>
-        <div id="logo">Ani<span>Shelf</span></div>
-        <div class="header-actions">
-            <div id="search-container">
-                <button class="icon-btn" id="search-icon" aria-label="Search"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></button>
-                <input type="text" id="search-bar" placeholder="Search for an anime..."><div id="search-results"></div>
-            </div>
-            <button class="icon-btn" id="settings-btn" aria-label="Settings"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></button>
-        </div>
-    </header>
+<div id="loader">
+<div class="loader-content">
+<div class="loader-logo">Ani<span>Shelf</span></div>
+<div class="loader-spinner"></div>
+</div>
+</div>
 
-    <main>
-        <div class="main-header">
-            <div id="list-tabs-container"><div id="list-tabs"><div id="tab-slider"></div></div></div>
-            <div class="controls-container">
-                <div class="custom-select-wrapper">
-                    <select id="sort-options">
-                        <option value="date">Date Added</option>
-                        <option value="name">Name</option>
-                        <option value="score">Score</option>
-                    </select>
-                </div>
-                <div id="view-toggle" class="control-group">
-                    <button class="control-btn active" id="grid-view-btn" title="Grid View" aria-label="Grid View"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg></button>
-                    <button class="control-btn" id="list-view-btn" title="List View" aria-label="List View"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg></button>
-                </div>
-            </div>
-        </div>
-        <section id="anime-container" class="grid-view"></section>
-    </main>
 
-    <div id="details-modal-overlay" class="modal-overlay">
-        <div id="details-modal-content" class="modal-content">
-            <button class="modal-close-btn">&times;</button>
-            <div id="modal-banner"></div>
-            <div id="modal-main-content">
-                <img id="modal-cover" src="" alt="Anime Cover">
-                <div id="modal-details">
-                    <h2 id="modal-title"></h2>
-                    <div id="modal-scores"></div>
-                    <div id="modal-notes-display"></div>
-                    <p id="modal-description"></p>
-                    <div id="details-modal-buttons">
-                        <button id="edit-details-btn" class="secondary-btn">Edit Details</button>
-                        <div class="custom-select-wrapper">
-                            <select id="list-selector"></select>
-                        </div>
-                        <button class="icon-btn danger-btn" id="modal-delete-btn" title="Delete Anime" aria-label="Delete Anime"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg></button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <div id="action-modal-overlay" class="modal-overlay">
-        <div id="action-modal-content" class="modal-content">
-            <h3 class="modal-title" id="action-modal-title"></h3>
-            <div class="modal-body" id="action-modal-body"></div>
-            <div class="modal-buttons">
-                <button class="secondary-btn" data-action="close">Cancel</button>
-                <button class="primary-btn" id="action-confirm-btn">Confirm</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="settings-modal-overlay" class="modal-overlay">
-        <div id="settings-modal-content" class="modal-content">
-            <button class="modal-close-btn">&times;</button>
-            <h3 class="modal-title">Manage Categories</h3>
-            <div class="modal-body"><div id="settings-list"></div></div>
-            <div class="modal-buttons"><button id="settings-add-new-btn" class="primary-btn">Add New Category</button></div>
-        </div>
-    </div>
-
-    <div id="notification-container"></div>
-
-    <script>
+<header>
+<div id="logo">Ani<span>Shelf</span></div>
+<div class="header-actions">
+<div id="search-container">
+<button class="icon-btn" id="search-icon" aria-label="Search"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></button>
+<input type="text" id="search-bar" placeholder="Search for an anime..."><div id="search-results"></div>
+</div>
+<button class="icon-btn" id="settings-btn" aria-label="Settings"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></button>
+</div>
+<script>
         document.addEventListener('DOMContentLoaded', () => {
             const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzmy9q4dIZhcFqIh3NaHX0-8ZnWxFepoTRiNnjjm_kiPXPnw-6v21DXoNpz0RQj7db5BQ/exec'; 
 
